@@ -1,0 +1,128 @@
+.gs-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.gs-panel {
+  width: 380px;
+  max-width: 60vw;
+  background: #252526;
+  border-right: 1px solid #454545;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.gs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 4px;
+  flex-shrink: 0;
+}
+
+.gs-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #bbbbbb;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.gs-close {
+  background: none;
+  border: none;
+  color: #6e6e6e;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 4px;
+  line-height: 1;
+}
+
+.gs-close:hover { color: #cccccc; }
+
+.gs-input-row {
+  padding: 6px 14px;
+  flex-shrink: 0;
+}
+
+.gs-input {
+  width: 100%;
+  padding: 7px 10px;
+  background: #3c3c3c;
+  border: 1px solid #555;
+  border-radius: 3px;
+  color: #cccccc;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.gs-input:focus { border-color: #0e639c; }
+
+.gs-summary {
+  padding: 4px 14px 6px;
+  font-size: 11px;
+  color: #6e6e6e;
+  flex-shrink: 0;
+}
+
+.gs-results {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.gs-results::-webkit-scrollbar { width: 6px; }
+.gs-results::-webkit-scrollbar-track { background: transparent; }
+.gs-results::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+
+.gs-file-group {
+  margin-bottom: 4px;
+}
+
+.gs-file-name {
+  padding: 6px 14px 3px;
+  font-size: 11px;
+  color: #cccccc;
+  font-weight: 600;
+  background: #2d2d2d;
+  position: sticky;
+  top: 0;
+}
+
+.gs-result-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 14px 3px 20px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.gs-result-line:hover {
+  background: #2a2d2e;
+}
+
+.gs-line-num {
+  font-size: 11px;
+  color: #6e6e6e;
+  min-width: 28px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.gs-line-text {
+  font-size: 12px;
+  color: #9e9e9e;
+  font-family: 'Cascadia Code', 'JetBrains Mono', Consolas, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

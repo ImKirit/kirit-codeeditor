@@ -3,6 +3,7 @@ import { join } from 'path'
 import { registerFsHandlers } from './ipc/fs'
 import { registerTerminalHandlers, watchWindowForTerminals } from './ipc/terminal'
 import { registerGitHandlers } from './ipc/git'
+import { registerSearchHandlers } from './ipc/search'
 import { loadSettings } from './services/settings'
 
 const isDev = process.env['ELECTRON_RENDERER_URL'] !== undefined
@@ -63,6 +64,7 @@ app.whenReady().then(async () => {
   registerFsHandlers()
   registerTerminalHandlers()
   registerGitHandlers()
+  registerSearchHandlers()
 
   const win = createWindow()
   watchWindowForTerminals(win)

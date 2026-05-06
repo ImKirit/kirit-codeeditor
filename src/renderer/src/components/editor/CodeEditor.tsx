@@ -4,6 +4,7 @@ import * as monaco from 'monaco-editor'
 import type * as Monaco from 'monaco-editor'
 import { useEditorStore } from '../../store/editor'
 import { useCommandStore } from '../../store/commands'
+import { useUIStore } from '../../store/ui'
 import { getLanguage } from '../../lib/language'
 import { FileTabs } from './FileTabs'
 import './CodeEditor.css'
@@ -52,7 +53,7 @@ const EDITOR_OPTIONS: Monaco.editor.IStandaloneEditorConstructionOptions = {
 }
 
 export function CodeEditor(): JSX.Element {
-  const { openFiles, activeFileId, updateContent, markSaved } = useEditorStore()
+  const { openFiles, activeFileId, updateContent, markSaved, targetLine, clearTargetLine } = useEditorStore()
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null)
   const activeFile = openFiles.find(f => f.id === activeFileId)
 
@@ -83,6 +84,13 @@ export function CodeEditor(): JSX.Element {
         () => useCommandStore.getState().openPalette()
       )
 
+      // Ctrl+P — quick open file (override Monaco's go-to-line)
+      editor.addCommand(
+        // eslint-disable-next-line no-bitwise
+        monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyP,
+        () => useUIStore.getState().openQuickOpen()
+      )
+
       // Track cursor position for status bar
       editor.onDidChangeCursorPosition(e => {
         useEditorStore.getState().setCursor(e.position.lineNumber, e.position.column)
@@ -104,6 +112,15 @@ export function CodeEditor(): JSX.Element {
   useEffect(() => {
     editorRef.current?.focus()
   }, [activeFileId])
+
+  // Jump to line when requested (e.g. from search results)
+  useEffect(() => {
+    if (targetLine !== null && editorRef.current) {
+      editorRef.current.revealLineInCenter(targetLine)
+      editorRef.current.setPosition({ lineNumber: targetLine, column: 1 })
+      clearTargetLine()
+    }
+  }, [targetLine, clearTargetLine])
 
   return (
     <div className="code-editor-wrap">

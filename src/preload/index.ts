@@ -25,6 +25,14 @@ const api = {
   git: {
     branch: (cwd: string): Promise<string | null> => ipcRenderer.invoke('git:branch', cwd)
   },
+  search: {
+    files: (rootDir: string): Promise<string[]> => ipcRenderer.invoke('search:files', rootDir),
+    content: (
+      rootDir: string,
+      query: string
+    ): Promise<Array<{ file: string; line: number; col: number; text: string }>> =>
+      ipcRenderer.invoke('search:content', rootDir, query)
+  },
   fs: {
     openFolder: (): Promise<string | null> => ipcRenderer.invoke('fs:openFolder'),
     openFile: (): Promise<string | null> => ipcRenderer.invoke('fs:openFile'),

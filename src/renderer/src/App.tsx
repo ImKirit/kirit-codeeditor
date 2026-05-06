@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useEditorStore } from './store/editor'
 import { useCommandStore } from './store/commands'
+import { useUIStore } from './store/ui'
 import { KodeLayout } from './components/layout/KodeLayout'
 import { CommandPalette } from './components/commandpalette/CommandPalette'
+import { QuickOpen } from './components/search/QuickOpen'
+import { GlobalSearch } from './components/search/GlobalSearch'
 import { getLanguage } from './lib/language'
 import './App.css'
 
 export default function App(): JSX.Element {
   const { openFiles, activeFileId, openFolder } = useEditorStore()
   const { openPalette, registerCommand } = useCommandStore()
+  const { openQuickOpen, openGlobalSearch } = useUIStore()
   const activeFile = openFiles.find(f => f.id === activeFileId)
 
   // Register global commands
@@ -68,20 +72,31 @@ export default function App(): JSX.Element {
       keybinding: 'Ctrl+Shift+P',
       action: () => openPalette()
     })
-  }, [registerCommand, openPalette])
+    registerCommand({
+      id: 'kode.quickOpen',
+      label: 'File: Go to File',
+      keybinding: 'Ctrl+P',
+      action: () => openQuickOpen()
+    })
+    registerCommand({
+      id: 'kode.globalSearch',
+      label: 'View: Search',
+      keybinding: 'Ctrl+Shift+F',
+      action: () => openGlobalSearch()
+    })
+  }, [registerCommand, openPalette, openQuickOpen, openGlobalSearch])
 
   // Global keyboard shortcuts (when focus is outside Monaco)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const ctrl = e.ctrlKey || e.metaKey
-      if (ctrl && e.shiftKey && e.key === 'P') {
-        e.preventDefault()
-        openPalette()
-      }
+      if (ctrl && e.shiftKey && e.key === 'P') { e.preventDefault(); openPalette() }
+      else if (ctrl && !e.shiftKey && e.key === 'p') { e.preventDefault(); openQuickOpen() }
+      else if (ctrl && e.shiftKey && e.key === 'F') { e.preventDefault(); openGlobalSearch() }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [openPalette])
+  }, [openPalette, openQuickOpen, openGlobalSearch])
 
   return (
     <div className="kode-shell">
@@ -89,6 +104,8 @@ export default function App(): JSX.Element {
       <KodeLayout />
       <StatusBar openFolder={openFolder} language={activeFile?.language} />
       <CommandPalette />
+      <QuickOpen />
+      <GlobalSearch />
     </div>
   )
 }

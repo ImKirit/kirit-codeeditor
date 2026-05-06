@@ -7,6 +7,7 @@ interface EditorStore {
   activeFileId: string | null
   cursorLine: number
   cursorCol: number
+  targetLine: number | null
 
   setOpenFolder: (path: string | null) => void
   openFile: (file: Omit<OpenFile, 'isDirty'>) => void
@@ -15,6 +16,8 @@ interface EditorStore {
   updateContent: (id: string, content: string) => void
   markSaved: (id: string) => void
   setCursor: (line: number, col: number) => void
+  jumpToLine: (line: number) => void
+  clearTargetLine: () => void
 }
 
 export const useEditorStore = create<EditorStore>((set, get) => ({
@@ -23,6 +26,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   activeFileId: null,
   cursorLine: 1,
   cursorCol: 1,
+  targetLine: null,
 
   setOpenFolder: path => set({ openFolder: path }),
 
@@ -62,5 +66,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       openFiles: state.openFiles.map(f => (f.id === id ? { ...f, isDirty: false } : f))
     })),
 
-  setCursor: (line, col) => set({ cursorLine: line, cursorCol: col })
+  setCursor: (line, col) => set({ cursorLine: line, cursorCol: col }),
+  jumpToLine: line => set({ targetLine: line }),
+  clearTargetLine: () => set({ targetLine: null })
 }))
