@@ -7,8 +7,12 @@ export function FileTreePanel(_props: IDockviewPanelProps): JSX.Element {
   const { openFolder, setOpenFolder } = useEditorStore()
 
   const handleOpenFolder = useCallback(async () => {
-    const path = await window.api.fs.openFolder()
-    if (path) setOpenFolder(path)
+    try {
+      const path = await window.api.fs.openFolder()
+      if (path) setOpenFolder(path)
+    } catch (e) {
+      console.error('Open folder failed:', e)
+    }
   }, [setOpenFolder])
 
   if (!openFolder) {

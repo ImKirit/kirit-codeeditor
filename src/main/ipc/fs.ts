@@ -7,18 +7,34 @@ import { getRecentFolders, addRecentFolder } from '../services/settings'
 export function registerFsHandlers(): void {
   ipcMain.handle('fs:openFolder', async event => {
     const win = BrowserWindow.fromWebContents(event.sender)
-    const result = await dialog.showOpenDialog(win!, { properties: ['openDirectory'] })
-    if (result.canceled || !result.filePaths.length) return null
-    const folderPath = result.filePaths[0]
-    await addRecentFolder(folderPath)
-    return folderPath
+    win?.focus()
+    try {
+      const result = await dialog.showOpenDialog(win!, {
+        properties: ['openDirectory'],
+        title: 'Open Folder'
+      })
+      if (result.canceled || !result.filePaths.length) return null
+      const folderPath = result.filePaths[0]
+      addRecentFolder(folderPath).catch(() => {})
+      return folderPath
+    } catch {
+      return null
+    }
   })
 
   ipcMain.handle('fs:openFile', async event => {
     const win = BrowserWindow.fromWebContents(event.sender)
-    const result = await dialog.showOpenDialog(win!, { properties: ['openFile'] })
-    if (result.canceled || !result.filePaths.length) return null
-    return result.filePaths[0]
+    win?.focus()
+    try {
+      const result = await dialog.showOpenDialog(win!, {
+        properties: ['openFile'],
+        title: 'Open File'
+      })
+      if (result.canceled || !result.filePaths.length) return null
+      return result.filePaths[0]
+    } catch {
+      return null
+    }
   })
 
   ipcMain.handle('fs:readDir', async (_, dirPath: string): Promise<FileEntry[]> => {

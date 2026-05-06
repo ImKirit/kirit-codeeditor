@@ -31,7 +31,7 @@ self.MonacoEnvironment = {
 }
 
 const EDITOR_OPTIONS: Monaco.editor.IStandaloneEditorConstructionOptions = {
-  theme: 'vs-dark',
+  theme: document.documentElement.getAttribute('data-theme') === 'light' ? 'vs' : 'vs-dark',
   fontSize: 13,
   fontFamily: "'Cascadia Code', 'JetBrains Mono', 'Fira Code', Consolas, monospace",
   fontLigatures: true,
@@ -55,7 +55,7 @@ const EDITOR_OPTIONS: Monaco.editor.IStandaloneEditorConstructionOptions = {
 
 export function CodeEditor(): JSX.Element {
   const { openFiles, activeFileId, updateContent, markSaved, targetLine, clearTargetLine } = useEditorStore()
-  const { fontSize, wordWrap, minimap, tabSize } = useSettingsStore()
+  const { fontSize, wordWrap, minimap, tabSize, theme } = useSettingsStore()
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null)
   const activeFile = openFiles.find(f => f.id === activeFileId)
 
@@ -68,6 +68,12 @@ export function CodeEditor(): JSX.Element {
       tabSize
     })
   }, [fontSize, wordWrap, minimap, tabSize])
+
+  // Switch Monaco theme when app theme changes
+  useEffect(() => {
+    const monacoTheme = theme === 'light' ? 'vs' : 'vs-dark'
+    monaco.editor.setTheme(monacoTheme)
+  }, [theme])
 
   const handleEditorMount = useCallback(
     (editor: Monaco.editor.IStandaloneCodeEditor) => {

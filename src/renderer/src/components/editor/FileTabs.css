@@ -1,7 +1,7 @@
 .file-tabs {
   display: flex;
-  background: #252526;
-  border-bottom: 1px solid #1e1e1e;
+  background: var(--kode-tab-bg, #252526);
+  border-bottom: 1px solid var(--kode-border-dim, #1e1e1e);
   overflow-x: auto;
   overflow-y: hidden;
   flex-shrink: 0;
@@ -13,8 +13,8 @@
 
 .file-tabs--empty {
   height: 35px;
-  background: #252526;
-  border-bottom: 1px solid #1e1e1e;
+  background: var(--kode-tab-bg, #252526);
+  border-bottom: 1px solid var(--kode-border-dim, #1e1e1e);
 }
 
 .file-tab {
@@ -27,23 +27,23 @@
   max-width: 200px;
   cursor: pointer;
   font-size: 12px;
-  color: #858585;
-  border-right: 1px solid #1e1e1e;
+  color: var(--kode-text-dim, #858585);
+  border-right: 1px solid var(--kode-border-dim, #1e1e1e);
   flex-shrink: 0;
   user-select: none;
   position: relative;
-  transition: color 0.1s;
+  transition: color 0.1s, background 0.1s;
 }
 
 .file-tab:hover {
-  background: rgba(255,255,255,0.04);
-  color: #cccccc;
+  background: var(--kode-selection, rgba(14, 99, 156, 0.1));
+  color: var(--kode-text, #cccccc);
 }
 
 .file-tab--active {
-  background: #1e1e1e;
-  color: #cccccc;
-  border-right-color: #1e1e1e;
+  background: var(--kode-tab-active, #1e1e1e);
+  color: var(--kode-text, #cccccc);
+  border-right-color: var(--kode-border-dim, #1e1e1e);
 }
 
 .file-tab--active::before {
@@ -52,8 +52,8 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 1px;
-  background: #0e639c;
+  height: 2px;
+  background: var(--kode-accent, #0e639c);
 }
 
 .file-tab-name {
@@ -64,19 +64,19 @@
 }
 
 .file-tab--active .file-tab-name {
-  color: #ffffff;
+  color: var(--kode-text, #ffffff);
 }
 
 .file-tab-dirty {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: #cccccc;
+  background: var(--kode-text-dim, #cccccc);
   flex-shrink: 0;
 }
 
 .file-tab--active .file-tab-dirty {
-  background: #ffffff;
+  background: var(--kode-accent, #0e639c);
 }
 
 .file-tab-close {
@@ -84,7 +84,7 @@
   height: 16px;
   border: none;
   background: transparent;
-  color: #858585;
+  color: var(--kode-text-dim, #858585);
   font-size: 14px;
   line-height: 1;
   display: flex;
@@ -104,6 +104,6 @@
 }
 
 .file-tab-close:hover {
-  background: rgba(255,255,255,0.1);
-  color: #ffffff;
+  background: rgba(128, 128, 128, 0.2);
+  color: var(--kode-text, #ffffff);
 }

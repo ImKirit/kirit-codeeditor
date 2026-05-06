@@ -3,7 +3,7 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background: #1e1e1e;
+  background: var(--kode-bg, #1e1e1e);
 }
 
 .code-editor-body {
@@ -21,29 +21,29 @@
   justify-content: center;
   height: 100%;
   gap: 0;
-  background: #1e1e1e;
+  background: var(--kode-surface, #1e1e1e);
   padding: 40px;
   box-sizing: border-box;
 }
 
 .editor-welcome-header {
-  margin-bottom: 32px;
+  margin-bottom: 36px;
   text-align: center;
 }
 
 .editor-welcome-logo {
-  font-size: 48px;
-  font-weight: 100;
-  color: #252525;
-  letter-spacing: 0.4em;
+  font-size: 42px;
+  font-weight: 200;
+  color: var(--kode-text-muted, #333333);
+  letter-spacing: 0.35em;
   text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .editor-welcome-version {
   font-size: 11px;
-  color: #333333;
-  letter-spacing: 0.1em;
+  color: var(--kode-text-muted, #555555);
+  letter-spacing: 0.08em;
 }
 
 .editor-welcome-grid {
@@ -63,54 +63,67 @@
 .editor-welcome-section-title {
   font-size: 10px;
   font-weight: 600;
-  color: #3a3a3a;
+  color: var(--kode-text-dim, #555555);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .editor-welcome-btn {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 10px;
-  background: transparent;
-  border: 1px solid #252525;
-  border-radius: 3px;
-  color: #5a5a5a;
+  padding: 8px 12px;
+  background: var(--kode-surface-2, #f8f8f8);
+  border: 1px solid var(--kode-border, #e0e0e0);
+  border-radius: 6px;
+  color: var(--kode-text-dim, #555555);
   font-size: 12px;
   cursor: pointer;
-  transition: border-color 0.12s, color 0.12s, background 0.12s;
+  transition: border-color 0.12s, color 0.12s, background 0.12s, box-shadow 0.12s;
   text-align: left;
   gap: 8px;
+  font-family: inherit;
 }
 
 .editor-welcome-btn:hover {
-  border-color: #3a3a3a;
-  color: #999999;
-  background: #1c1c1c;
+  border-color: var(--kode-accent, #0066b8);
+  color: var(--kode-text, #1a1a1a);
+  background: var(--kode-selection, rgba(0, 102, 184, 0.08));
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .editor-welcome-kbd {
   font-size: 10px;
-  color: #2d2d2d;
+  color: var(--kode-text-muted, #999999);
   font-family: 'Cascadia Code', Consolas, monospace;
   flex-shrink: 0;
+  background: var(--kode-border, #e0e0e0);
+  padding: 1px 5px;
+  border-radius: 3px;
 }
 
 .editor-welcome-tip {
   font-size: 11px;
-  color: #2e2e2e;
+  color: var(--kode-text-dim, #555555);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 3px 0;
+  padding: 4px 2px;
   gap: 12px;
+  border-bottom: 1px solid var(--kode-border-dim, #f0f0f0);
+}
+
+.editor-welcome-tip:last-child {
+  border-bottom: none;
 }
 
 .editor-welcome-tip-key {
   font-family: 'Cascadia Code', Consolas, monospace;
   font-size: 10px;
-  color: #2a2a2a;
+  color: var(--kode-text-muted, #999999);
   flex-shrink: 0;
+  background: var(--kode-border, #e0e0e0);
+  padding: 1px 5px;
+  border-radius: 3px;
 }

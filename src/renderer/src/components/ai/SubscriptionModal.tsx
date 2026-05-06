@@ -222,21 +222,29 @@ export function SubscriptionModal({ onClose }: Props): JSX.Element {
                   />
                 </div>
                 <div className="sub-field">
-                  <label className="sub-label">API Key</label>
+                  <label className="sub-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>API Key</span>
+                    {API_KEY_LINKS[selectedProvider] && (
+                      <button
+                        className="sub-key-link-btn"
+                        onClick={() => window.open(`https://${API_KEY_LINKS[selectedProvider]}`)}
+                        type="button"
+                      >
+                        Get API Key →
+                      </button>
+                    )}
+                  </label>
                   <input
                     className="sub-input"
                     type="password"
-                    placeholder="sk-..."
+                    placeholder={selectedProvider === 'claude' ? 'sk-ant-...' : selectedProvider === 'openai' ? 'sk-...' : 'Your API key'}
                     value={apiKey}
                     onChange={e => setApiKey(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') handleAdd() }}
                   />
-                  {API_KEY_LINKS[selectedProvider] && (
-                    <div className="sub-key-hint">
-                      Get your key at{' '}
-                      <span className="sub-key-link">{API_KEY_LINKS[selectedProvider]}</span>
-                    </div>
-                  )}
+                  <div className="sub-key-hint">
+                    Your API key is stored locally and never sent anywhere except the provider.
+                  </div>
                 </div>
                 {err && <div className="sub-err">{err}</div>}
                 <button
@@ -245,7 +253,7 @@ export function SubscriptionModal({ onClose }: Props): JSX.Element {
                   onClick={handleAdd}
                   disabled={saving}
                 >
-                  {saving ? 'Connecting…' : 'Connect Account'}
+                  {saving ? 'Connecting…' : 'Connect'}
                 </button>
               </div>
             )}

@@ -6,8 +6,37 @@ export interface Theme {
 
 export const THEMES: Theme[] = [
   {
+    id: 'light',
+    name: 'Light (Default)',
+    vars: {
+      '--kode-bg': '#f3f3f3',
+      '--kode-surface': '#ffffff',
+      '--kode-surface-2': '#f8f8f8',
+      '--kode-border': '#e0e0e0',
+      '--kode-border-dim': '#ebebeb',
+      '--kode-text': '#1a1a1a',
+      '--kode-text-dim': '#555555',
+      '--kode-text-muted': '#999999',
+      '--kode-accent': '#0066b8',
+      '--kode-accent-hover': '#0052a3',
+      '--kode-accent-text': '#ffffff',
+      '--kode-titlebar': '#e8e8e8',
+      '--kode-statusbar': '#0066b8',
+      '--kode-tab-bg': '#ececec',
+      '--kode-tab-active': '#ffffff',
+      '--kode-input-bg': '#ffffff',
+      '--kode-input-border': '#cccccc',
+      '--kode-scrollbar': '#cccccc',
+      '--kode-selection': 'rgba(0, 102, 184, 0.15)',
+      '--kode-error': '#c0392b',
+      '--kode-success': '#27ae60',
+      '--kode-warning': '#e67e22',
+      '--kode-info': '#2980b9',
+    }
+  },
+  {
     id: 'dark',
-    name: 'Dark (Default)',
+    name: 'Dark',
     vars: {
       '--kode-bg': '#1e1e1e',
       '--kode-surface': '#252526',
@@ -163,5 +192,5 @@ export function applyTheme(themeId: string): void {
 }
 
 export function loadSavedTheme(): string {
-  try { return localStorage.getItem('kode:theme') ?? 'dark' } catch { return 'dark' }
+  try { return localStorage.getItem('kode:theme') ?? 'light' } catch { return 'light' }
 }

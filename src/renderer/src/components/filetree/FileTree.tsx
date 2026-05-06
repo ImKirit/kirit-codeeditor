@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type { FileEntry } from '../../../../shared/types'
 import { useEditorStore } from '../../store/editor'
 import { getLanguage, getDisplayName, getFileIcon } from '../../lib/language'
@@ -10,13 +10,11 @@ interface FileTreeProps {
 
 export function FileTree({ rootPath }: FileTreeProps): JSX.Element {
   const [entries, setEntries] = useState<FileEntry[]>([])
-  const [loaded, setLoaded] = useState(false)
 
-  // Load root on first render
-  if (!loaded) {
-    setLoaded(true)
-    window.api.fs.readDir(rootPath).then(setEntries)
-  }
+  useEffect(() => {
+    setEntries([])
+    window.api.fs.readDir(rootPath).then(setEntries).catch(() => setEntries([]))
+  }, [rootPath])
 
   const rootName = getDisplayName(rootPath)
 

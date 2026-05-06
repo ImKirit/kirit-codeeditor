@@ -261,6 +261,8 @@ export function ChatPanel(): JSX.Element {
   const activeSub: Subscription | undefined = subscriptions.find(s => s.id === selectedSubId)
   const activeProvider = activeSub ? PROVIDERS.find(p => p.id === activeSub.provider) : undefined
 
+  const modelName = activeProvider?.models.find(m => m.id === selectedModel)?.name ?? selectedModel
+
   return (
     <div className="chat-panel">
       {/* Header */}
@@ -276,14 +278,9 @@ export function ChatPanel(): JSX.Element {
               }}>
                 {subscriptions.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
               </select>
-              {activeProvider && (
-                <select className="chat-select" value={selectedModel} onChange={e => setSelectedModel(e.target.value)}>
-                  {activeProvider.models.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                </select>
-              )}
             </>
           ) : (
-            <span className="chat-no-sub">No subscription</span>
+            <span className="chat-no-sub">No AI connected</span>
           )}
         </div>
         <div className="chat-header-actions">
@@ -292,21 +289,12 @@ export function ChatPanel(): JSX.Element {
             onClick={() => setAutoFollow(v => !v)}
             title={autoFollow ? 'Auto-follow: on' : 'Auto-follow: off'}
           >↕</button>
-          {activeSession && (
-            <button
-              className={`chat-header-btn${pendingScheduled.length > 0 ? ' chat-sched-active' : ''}`}
-              onClick={() => setShowScheduler(v => !v)}
-              title={pendingScheduled.length > 0 ? `${pendingScheduled.length} scheduled` : 'Schedule message'}
-            >
-              ⧗{pendingScheduled.length > 0 ? ` ${pendingScheduled.length}` : ''}
-            </button>
-          )}
-          <button className="chat-header-btn" onClick={handleNewSession} title="New chat">+</button>
-          <button className="chat-header-btn" onClick={() => setShowSubs(true)} title="Manage subscriptions">⚙</button>
+          <button className="chat-header-btn" onClick={handleNewSession} title="New thread">+</button>
+          <button className="chat-header-btn" onClick={() => setShowSubs(true)} title="Manage AI accounts">⚙</button>
         </div>
       </div>
 
-      {/* Session tabs (when multiple) */}
+      {/* Session tabs */}
       {sessions.length > 0 && (
         <div className="chat-session-tabs">
           {sessions.map(s => (
@@ -319,10 +307,10 @@ export function ChatPanel(): JSX.Element {
             >
               <span className="chat-session-tab-text">{s.title}</span>
               {sessions.length > 1 && (
-                <span
+                <button
                   className="chat-session-tab-close"
                   onClick={e => { e.stopPropagation(); deleteSession(s.id) }}
-                >×</span>
+                >×</button>
               )}
             </button>
           ))}
@@ -355,7 +343,7 @@ export function ChatPanel(): JSX.Element {
               onKeyDown={e => { if (e.key === 'Enter') commitTitle(); if (e.key === 'Escape') setEditingTitle(false) }}
             />
           ) : (
-            <button className="chat-rename-btn" onClick={startEditTitle} title="Rename session">✎</button>
+            <button className="chat-rename-btn" onClick={startEditTitle} title="Rename thread">✎</button>
           )}
         </div>
       )}
@@ -368,31 +356,37 @@ export function ChatPanel(): JSX.Element {
         </div>
       )}
 
-      {/* Content */}
+      {/* Chat content */}
       {panelTab === 'chat' && (
         <div className="chat-messages">
           {!activeSession && subscriptions.length > 0 && (
             <div className="chat-empty">
-              <div className="chat-empty-icon">&#9670;</div>
-              <div className="chat-empty-text">Start a conversation</div>
-              <div className="chat-empty-hint">Ctrl+Enter to send</div>
+              <div className="chat-empty-icon">✦</div>
+              <div className="chat-empty-text">Start a new thread</div>
+              <div className="chat-empty-hint">Press + to create a thread, then type below</div>
             </div>
           )}
           {!activeSession && subscriptions.length === 0 && (
             <div className="chat-empty">
-              <div className="chat-empty-icon">&#9670;</div>
+              <div className="chat-empty-icon">✦</div>
               <div className="chat-empty-text">Connect an AI provider</div>
-              <button className="chat-connect-btn" onClick={() => setShowSubs(true)}>Add Subscription</button>
+              <div className="chat-empty-hint">Add your API key to get started</div>
+              <button className="chat-connect-btn" onClick={() => setShowSubs(true)}>Connect AI</button>
             </div>
           )}
           {activeSession?.messages.map(msg => (
             <div key={msg.id} className={`chat-msg chat-msg--${msg.role}${msg.isStreaming ? ' chat-msg--streaming' : ''}`}>
-              <div className="chat-msg-label">
-                {msg.role === 'user' ? 'You' : (activeProvider?.name ?? 'Assistant')}
-                {msg.isStreaming && <span className="chat-msg-cursor" />}
+              <div className="chat-msg-avatar">
+                {msg.role === 'user' ? 'Y' : 'AI'}
               </div>
-              <div className="chat-msg-content">
-                {msg.content || (msg.isStreaming ? <span className="chat-thinking">…</span> : '')}
+              <div className="chat-msg-body">
+                <div className="chat-msg-label">
+                  {msg.role === 'user' ? 'You' : (activeProvider?.name ?? 'Agent')}
+                  {msg.isStreaming && <span className="chat-msg-cursor" />}
+                </div>
+                <div className="chat-msg-content">
+                  {msg.content || (msg.isStreaming ? <span className="chat-thinking">Thinking…</span> : '')}
+                </div>
               </div>
             </div>
           ))}
@@ -413,9 +407,7 @@ export function ChatPanel(): JSX.Element {
                   key={f}
                   className="chat-file-item"
                   onClick={() => {
-                    if (openedFile) {
-                      useEditorStore.getState().setActiveFile(f)
-                    }
+                    if (openedFile) useEditorStore.getState().setActiveFile(f)
                     setPanelTab('chat')
                   }}
                   title={f}
@@ -430,22 +422,59 @@ export function ChatPanel(): JSX.Element {
         </div>
       )}
 
-      {/* Input */}
+      {/* Input area */}
       <div className="chat-input-area">
-        <textarea
-          className="chat-input"
-          placeholder="Ask anything… (Ctrl+Enter to send)"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          rows={3}
-          disabled={isStreaming}
-        />
-        {isStreaming ? (
-          <button className="chat-stop-btn" onClick={cancelStream} title="Stop generating">■</button>
-        ) : (
-          <button className="chat-send-btn" onClick={sendMessage} disabled={!input.trim()}>↑</button>
-        )}
+        <div className="chat-input-box">
+          <textarea
+            className="chat-input"
+            placeholder="Tell the agent what to build. Shift+Enter for newline."
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            rows={2}
+            disabled={isStreaming}
+          />
+          <div className="chat-input-pills">
+            {activeSession && (
+              <button
+                className={`chat-pill${pendingScheduled.length > 0 ? ' chat-sched-active' : ''}`}
+                onClick={() => setShowScheduler(v => !v)}
+                title="Schedule message"
+              >
+                ⧗ {pendingScheduled.length > 0 ? `${pendingScheduled.length} scheduled` : 'Schedule'}
+              </button>
+            )}
+            {activeProvider && (
+              <select
+                className="chat-pill"
+                style={{ border: 'none', background: 'none', cursor: 'pointer', paddingLeft: 0 }}
+                value={selectedModel}
+                onChange={e => setSelectedModel(e.target.value)}
+                title="Select model"
+              >
+                {activeProvider.models.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+              </select>
+            )}
+            {!activeProvider && subscriptions.length > 0 && (
+              <span style={{ fontSize: 11, opacity: 0.5 }}>{modelName || 'No model'}</span>
+            )}
+            <button
+              className={`chat-follow-btn chat-pill${autoFollow ? ' active' : ''}`}
+              onClick={() => setAutoFollow(v => !v)}
+              title={autoFollow ? 'Auto-follow on' : 'Auto-follow off'}
+              style={{ marginLeft: 0 }}
+            >
+              ↕ Follow
+            </button>
+            {isStreaming ? (
+              <button className="chat-pill-stop" onClick={cancelStream}>■ Stop</button>
+            ) : (
+              <button className="chat-pill-send" onClick={sendMessage} disabled={!input.trim()}>
+                Send ↑
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {showSubs && <SubscriptionModal onClose={() => setShowSubs(false)} />}

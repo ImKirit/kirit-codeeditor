@@ -3,6 +3,14 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding-top: 4px;
+  background: var(--kode-surface, #ffffff);
+}
+
+.file-tree::-webkit-scrollbar { width: 4px; }
+.file-tree::-webkit-scrollbar-track { background: transparent; }
+.file-tree::-webkit-scrollbar-thumb {
+  background: var(--kode-scrollbar, #cccccc);
+  border-radius: 2px;
 }
 
 .file-tree-root-label {
@@ -10,7 +18,7 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: #858585;
+  color: var(--kode-text-muted, #999999);
   user-select: none;
 }
 
@@ -21,22 +29,23 @@
   height: 22px;
   cursor: pointer;
   font-size: 13px;
-  color: #cccccc;
+  color: var(--kode-text, #1a1a1a);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   user-select: none;
-  border-radius: 2px;
+  border-radius: 4px;
   margin: 0 4px;
+  transition: background 0.08s;
 }
 
 .file-tree-row:hover {
-  background: #2a2d2e;
+  background: var(--kode-border-dim, #f0f0f0);
 }
 
 .file-tree-chevron {
   font-size: 10px;
-  color: #858585;
+  color: var(--kode-text-muted, #999999);
   width: 12px;
   flex-shrink: 0;
 }
@@ -53,14 +62,16 @@
 .file-tree-name {
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 1;
 }
 
 .file-tree-file--open > .file-tree-name {
-  color: #ffffff;
+  color: var(--kode-accent, #0066b8);
+  font-weight: 500;
 }
 
 .file-tree-dir {
-  color: #cccccc;
+  color: var(--kode-text, #1a1a1a);
 }
 
 .file-tree-file-icon {
@@ -71,4 +82,40 @@
   text-align: center;
   flex-shrink: 0;
   letter-spacing: -0.02em;
+}
+
+/* panel empty state */
+.panel-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+  background: var(--kode-surface, #ffffff);
+  padding: 24px;
+}
+
+.panel-empty-text {
+  font-size: 12px;
+  color: var(--kode-text-muted, #aaaaaa);
+  margin: 0;
+}
+
+.panel-empty-btn {
+  padding: 8px 18px;
+  background: var(--kode-accent, #0066b8);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s, box-shadow 0.12s;
+}
+
+.panel-empty-btn:hover {
+  background: var(--kode-accent-hover, #0052a3);
+  box-shadow: 0 2px 8px rgba(0, 102, 184, 0.25);
 }
