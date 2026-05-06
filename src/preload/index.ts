@@ -22,6 +22,9 @@ const api = {
       return () => ipcRenderer.removeListener(channel, handler)
     }
   },
+  git: {
+    branch: (cwd: string): Promise<string | null> => ipcRenderer.invoke('git:branch', cwd)
+  },
   fs: {
     openFolder: (): Promise<string | null> => ipcRenderer.invoke('fs:openFolder'),
     openFile: (): Promise<string | null> => ipcRenderer.invoke('fs:openFile'),

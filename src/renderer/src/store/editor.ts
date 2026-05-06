@@ -5,6 +5,8 @@ interface EditorStore {
   openFolder: string | null
   openFiles: OpenFile[]
   activeFileId: string | null
+  cursorLine: number
+  cursorCol: number
 
   setOpenFolder: (path: string | null) => void
   openFile: (file: Omit<OpenFile, 'isDirty'>) => void
@@ -12,12 +14,15 @@ interface EditorStore {
   setActiveFile: (id: string) => void
   updateContent: (id: string, content: string) => void
   markSaved: (id: string) => void
+  setCursor: (line: number, col: number) => void
 }
 
 export const useEditorStore = create<EditorStore>((set, get) => ({
   openFolder: null,
   openFiles: [],
   activeFileId: null,
+  cursorLine: 1,
+  cursorCol: 1,
 
   setOpenFolder: path => set({ openFolder: path }),
 
@@ -55,5 +60,7 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   markSaved: id =>
     set(state => ({
       openFiles: state.openFiles.map(f => (f.id === id ? { ...f, isDirty: false } : f))
-    }))
+    })),
+
+  setCursor: (line, col) => set({ cursorLine: line, cursorCol: col })
 }))

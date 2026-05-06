@@ -36,17 +36,33 @@
   background: #0e639c;
   display: flex;
   align-items: center;
-  padding: 0 10px;
-  gap: 14px;
+  padding: 0 8px;
+  gap: 0;
   flex-shrink: 0;
+  user-select: none;
 }
 
 .kode-statusbar-item {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.9);
   white-space: nowrap;
+  padding: 0 6px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  cursor: default;
+  transition: background 0.1s;
 }
 
-.kode-statusbar-item.right {
-  margin-left: auto;
+.kode-statusbar-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.kode-statusbar-branch {
+  background: rgba(255, 255, 255, 0.08);
+  margin-right: 4px;
+}
+
+.kode-statusbar-spacer {
+  flex: 1;
 }

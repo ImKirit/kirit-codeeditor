@@ -3,6 +3,7 @@ import MonacoEditor, { loader } from '@monaco-editor/react'
 import * as monaco from 'monaco-editor'
 import type * as Monaco from 'monaco-editor'
 import { useEditorStore } from '../../store/editor'
+import { useCommandStore } from '../../store/commands'
 import { getLanguage } from '../../lib/language'
 import { FileTabs } from './FileTabs'
 import './CodeEditor.css'
@@ -62,7 +63,7 @@ export function CodeEditor(): JSX.Element {
       // Ctrl+S to save
       editor.addCommand(
         // eslint-disable-next-line no-bitwise
-        2048 | 49, // KeyMod.CtrlCmd | KeyCode.KeyS
+        monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
         async () => {
           const file = useEditorStore.getState().openFiles.find(f => f.id === activeFileId)
           if (!file) return
@@ -74,6 +75,18 @@ export function CodeEditor(): JSX.Element {
           }
         }
       )
+
+      // Ctrl+Shift+P — open command palette (override Monaco's format shortcut)
+      editor.addCommand(
+        // eslint-disable-next-line no-bitwise
+        monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyP,
+        () => useCommandStore.getState().openPalette()
+      )
+
+      // Track cursor position for status bar
+      editor.onDidChangeCursorPosition(e => {
+        useEditorStore.getState().setCursor(e.position.lineNumber, e.position.column)
+      })
     },
     [activeFileId, markSaved]
   )

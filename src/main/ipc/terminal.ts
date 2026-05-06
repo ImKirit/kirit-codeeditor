@@ -1,6 +1,5 @@
 import { ipcMain, BrowserWindow } from 'electron'
 import * as pty from '@lydell/node-pty'
-import { join } from 'path'
 
 interface TermSession {
   pty: pty.IPty
