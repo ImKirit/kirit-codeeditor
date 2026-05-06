@@ -11,7 +11,7 @@ export const THEMES: Theme[] = [
     vars: {
       '--kode-bg': '#f3f3f3',
       '--kode-surface': '#ffffff',
-      '--kode-surface-2': '#f8f8f8',
+      '--kode-surface-2': '#f5f5f5',
       '--kode-border': '#e0e0e0',
       '--kode-border-dim': '#ebebeb',
       '--kode-text': '#1a1a1a',
@@ -20,8 +20,11 @@ export const THEMES: Theme[] = [
       '--kode-accent': '#0066b8',
       '--kode-accent-hover': '#0052a3',
       '--kode-accent-text': '#ffffff',
+      '--kode-btn': '#1a1a1a',
+      '--kode-btn-fg': '#ffffff',
+      '--kode-btn-hover': '#333333',
       '--kode-titlebar': '#e8e8e8',
-      '--kode-statusbar': '#0066b8',
+      '--kode-statusbar': '#1a1a1a',
       '--kode-tab-bg': '#ececec',
       '--kode-tab-active': '#ffffff',
       '--kode-input-bg': '#ffffff',
@@ -49,8 +52,11 @@ export const THEMES: Theme[] = [
       '--kode-accent': '#0e639c',
       '--kode-accent-hover': '#1177bb',
       '--kode-accent-text': '#ffffff',
+      '--kode-btn': '#e8e8e8',
+      '--kode-btn-fg': '#1a1a1a',
+      '--kode-btn-hover': '#ffffff',
       '--kode-titlebar': '#181818',
-      '--kode-statusbar': '#0e639c',
+      '--kode-statusbar': '#181818',
       '--kode-tab-bg': '#2d2d2d',
       '--kode-tab-active': '#1e1e1e',
       '--kode-input-bg': '#3c3c3c',
@@ -78,8 +84,11 @@ export const THEMES: Theme[] = [
       '--kode-accent': '#0e639c',
       '--kode-accent-hover': '#1177bb',
       '--kode-accent-text': '#ffffff',
+      '--kode-btn': '#e0e0e0',
+      '--kode-btn-fg': '#141414',
+      '--kode-btn-hover': '#ffffff',
       '--kode-titlebar': '#0e0e0e',
-      '--kode-statusbar': '#0e639c',
+      '--kode-statusbar': '#0e0e0e',
       '--kode-tab-bg': '#222222',
       '--kode-tab-active': '#141414',
       '--kode-input-bg': '#2a2a2a',
@@ -107,8 +116,11 @@ export const THEMES: Theme[] = [
       '--kode-accent': '#4fc3f7',
       '--kode-accent-hover': '#81d4fa',
       '--kode-accent-text': '#000000',
+      '--kode-btn': '#ffffff',
+      '--kode-btn-fg': '#000000',
+      '--kode-btn-hover': '#e0e0e0',
       '--kode-titlebar': '#000000',
-      '--kode-statusbar': '#006ab1',
+      '--kode-statusbar': '#000000',
       '--kode-tab-bg': '#111111',
       '--kode-tab-active': '#000000',
       '--kode-input-bg': '#111111',
@@ -136,8 +148,11 @@ export const THEMES: Theme[] = [
       '--kode-accent': '#a6e22e',
       '--kode-accent-hover': '#b8f234',
       '--kode-accent-text': '#000000',
+      '--kode-btn': '#f8f8f2',
+      '--kode-btn-fg': '#272822',
+      '--kode-btn-hover': '#ffffff',
       '--kode-titlebar': '#1e1f19',
-      '--kode-statusbar': '#75715e',
+      '--kode-statusbar': '#1e1f19',
       '--kode-tab-bg': '#3a3b35',
       '--kode-tab-active': '#272822',
       '--kode-input-bg': '#3a3b35',
@@ -165,8 +180,11 @@ export const THEMES: Theme[] = [
       '--kode-accent': '#268bd2',
       '--kode-accent-hover': '#2e9ee4',
       '--kode-accent-text': '#ffffff',
+      '--kode-btn': '#839496',
+      '--kode-btn-fg': '#002b36',
+      '--kode-btn-hover': '#93a1a1',
       '--kode-titlebar': '#001e27',
-      '--kode-statusbar': '#268bd2',
+      '--kode-statusbar': '#001e27',
       '--kode-tab-bg': '#0d4052',
       '--kode-tab-active': '#002b36',
       '--kode-input-bg': '#073642',
@@ -178,10 +196,96 @@ export const THEMES: Theme[] = [
       '--kode-warning': '#b58900',
       '--kode-info': '#2aa198',
     }
+  },
+  {
+    id: 'custom',
+    name: 'Custom',
+    vars: {
+      '--kode-bg': '#f3f3f3',
+      '--kode-surface': '#ffffff',
+      '--kode-surface-2': '#f5f5f5',
+      '--kode-border': '#e0e0e0',
+      '--kode-border-dim': '#ebebeb',
+      '--kode-text': '#1a1a1a',
+      '--kode-text-dim': '#555555',
+      '--kode-text-muted': '#999999',
+      '--kode-accent': '#0066b8',
+      '--kode-accent-hover': '#0052a3',
+      '--kode-accent-text': '#ffffff',
+      '--kode-btn': '#1a1a1a',
+      '--kode-btn-fg': '#ffffff',
+      '--kode-btn-hover': '#333333',
+      '--kode-titlebar': '#e8e8e8',
+      '--kode-statusbar': '#1a1a1a',
+      '--kode-tab-bg': '#ececec',
+      '--kode-tab-active': '#ffffff',
+      '--kode-input-bg': '#ffffff',
+      '--kode-input-border': '#cccccc',
+      '--kode-scrollbar': '#cccccc',
+      '--kode-selection': 'rgba(0, 102, 184, 0.15)',
+      '--kode-error': '#c0392b',
+      '--kode-success': '#27ae60',
+      '--kode-warning': '#e67e22',
+      '--kode-info': '#2980b9',
+    }
   }
 ]
 
-export function applyTheme(themeId: string): void {
+function hexToRgb(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `${r}, ${g}, ${b}`
+}
+
+function lighten(hex: string, amount: number): string {
+  const r = Math.min(255, parseInt(hex.slice(1, 3), 16) + amount)
+  const g = Math.min(255, parseInt(hex.slice(3, 5), 16) + amount)
+  const b = Math.min(255, parseInt(hex.slice(5, 7), 16) + amount)
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
+}
+
+function darken(hex: string, amount: number): string {
+  const r = Math.max(0, parseInt(hex.slice(1, 3), 16) - amount)
+  const g = Math.max(0, parseInt(hex.slice(3, 5), 16) - amount)
+  const b = Math.max(0, parseInt(hex.slice(5, 7), 16) - amount)
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
+}
+
+export function applyCustomTheme(mainColor: string, accentColor: string): void {
+  const root = document.documentElement
+  const baseTheme = THEMES.find(t => t.id === 'custom')!
+  for (const [key, val] of Object.entries(baseTheme.vars)) {
+    root.style.setProperty(key, val)
+  }
+  root.style.setProperty('--kode-bg', mainColor)
+  root.style.setProperty('--kode-surface', lighten(mainColor, 15))
+  root.style.setProperty('--kode-surface-2', lighten(mainColor, 8))
+  root.style.setProperty('--kode-titlebar', darken(mainColor, 10))
+  root.style.setProperty('--kode-statusbar', darken(mainColor, 20))
+  root.style.setProperty('--kode-tab-bg', lighten(mainColor, 5))
+  root.style.setProperty('--kode-tab-active', lighten(mainColor, 20))
+  root.style.setProperty('--kode-accent', accentColor)
+  root.style.setProperty('--kode-accent-hover', darken(accentColor, 20))
+  root.style.setProperty('--kode-btn', accentColor)
+  root.style.setProperty('--kode-btn-fg', '#ffffff')
+  root.style.setProperty('--kode-btn-hover', darken(accentColor, 15))
+  root.style.setProperty('--kode-selection', `rgba(${hexToRgb(accentColor)}, 0.15)`)
+  root.setAttribute('data-theme', 'custom')
+  try {
+    localStorage.setItem('kode:theme', 'custom')
+    localStorage.setItem('kode:customMain', mainColor)
+    localStorage.setItem('kode:customAccent', accentColor)
+  } catch { /* ignore */ }
+}
+
+export function applyTheme(themeId: string, customMain?: string, customAccent?: string): void {
+  if (themeId === 'custom') {
+    const main = customMain ?? localStorage.getItem('kode:customMain') ?? '#f3f3f3'
+    const accent = customAccent ?? localStorage.getItem('kode:customAccent') ?? '#0066b8'
+    applyCustomTheme(main, accent)
+    return
+  }
   const theme = THEMES.find(t => t.id === themeId) ?? THEMES[0]
   const root = document.documentElement
   for (const [key, val] of Object.entries(theme.vars)) {
@@ -193,4 +297,15 @@ export function applyTheme(themeId: string): void {
 
 export function loadSavedTheme(): string {
   try { return localStorage.getItem('kode:theme') ?? 'light' } catch { return 'light' }
+}
+
+export function loadCustomColors(): { main: string; accent: string } {
+  try {
+    return {
+      main: localStorage.getItem('kode:customMain') ?? '#f3f3f3',
+      accent: localStorage.getItem('kode:customAccent') ?? '#0066b8'
+    }
+  } catch {
+    return { main: '#f3f3f3', accent: '#0066b8' }
+  }
 }

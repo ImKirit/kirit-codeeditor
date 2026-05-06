@@ -43,7 +43,7 @@ function playbackWrite(
   return () => clearTimeout(animId)
 }
 
-type PanelTab = 'chat' | 'files'
+type PanelTab = 'chat' | 'changes' | 'console' | 'code'
 
 export function ChatPanel(): JSX.Element {
   const {
@@ -265,11 +265,36 @@ export function ChatPanel(): JSX.Element {
 
   return (
     <div className="chat-panel">
-      {/* Header */}
-      <div className="chat-header">
-        <div className="chat-header-selectors">
-          {subscriptions.length > 0 ? (
-            <>
+      {/* TERRA-style top tabs */}
+      <div className="chat-terra-tabs">
+        <button
+          className={`chat-terra-tab${panelTab === 'chat' ? ' active' : ''}`}
+          onClick={() => setPanelTab('chat')}
+        >Chat</button>
+        <button
+          className={`chat-terra-tab${panelTab === 'changes' ? ' active' : ''}`}
+          onClick={() => setPanelTab('changes')}
+        >
+          Changes
+          {(activeSession?.changedFiles.length ?? 0) > 0 && (
+            <span className="chat-terra-badge">{activeSession!.changedFiles.length}</span>
+          )}
+        </button>
+        <button
+          className={`chat-terra-tab${panelTab === 'console' ? ' active' : ''}`}
+          onClick={() => setPanelTab('console')}
+        >Console</button>
+        <button
+          className={`chat-terra-tab${panelTab === 'code' ? ' active' : ''}`}
+          onClick={() => setPanelTab('code')}
+        >Code</button>
+      </div>
+
+      {/* Header (only visible in chat/code tabs) */}
+      {(panelTab === 'chat' || panelTab === 'code') && (
+        <div className="chat-header">
+          <div className="chat-header-selectors">
+            {subscriptions.length > 0 ? (
               <select className="chat-select" value={selectedSubId} onChange={e => {
                 setSelectedSubId(e.target.value)
                 const sub = subscriptions.find(s => s.id === e.target.value)
@@ -278,24 +303,24 @@ export function ChatPanel(): JSX.Element {
               }}>
                 {subscriptions.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
               </select>
-            </>
-          ) : (
-            <span className="chat-no-sub">No AI connected</span>
-          )}
+            ) : (
+              <span className="chat-no-sub">No AI connected</span>
+            )}
+          </div>
+          <div className="chat-header-actions">
+            <button
+              className={`chat-follow-btn${autoFollow ? ' active' : ''}`}
+              onClick={() => setAutoFollow(v => !v)}
+              title={autoFollow ? 'Auto-follow: on' : 'Auto-follow: off'}
+            >↕</button>
+            <button className="chat-header-btn" onClick={handleNewSession} title="New thread">+</button>
+            <button className="chat-header-btn" onClick={() => setShowSubs(true)} title="Manage AI accounts">⚙</button>
+          </div>
         </div>
-        <div className="chat-header-actions">
-          <button
-            className={`chat-follow-btn${autoFollow ? ' active' : ''}`}
-            onClick={() => setAutoFollow(v => !v)}
-            title={autoFollow ? 'Auto-follow: on' : 'Auto-follow: off'}
-          >↕</button>
-          <button className="chat-header-btn" onClick={handleNewSession} title="New thread">+</button>
-          <button className="chat-header-btn" onClick={() => setShowSubs(true)} title="Manage AI accounts">⚙</button>
-        </div>
-      </div>
+      )}
 
-      {/* Session tabs */}
-      {sessions.length > 0 && (
+      {/* Session tabs (chat tab only) */}
+      {panelTab === 'chat' && sessions.length > 0 && (
         <div className="chat-session-tabs">
           {sessions.map(s => (
             <button
@@ -314,26 +339,7 @@ export function ChatPanel(): JSX.Element {
               )}
             </button>
           ))}
-        </div>
-      )}
-
-      {/* Panel sub-tabs */}
-      {activeSession && (
-        <div className="chat-panel-tabs">
-          <button
-            className={`chat-panel-tab${panelTab === 'chat' ? ' active' : ''}`}
-            onClick={() => setPanelTab('chat')}
-          >Chat</button>
-          <button
-            className={`chat-panel-tab${panelTab === 'files' ? ' active' : ''}`}
-            onClick={() => setPanelTab('files')}
-          >
-            Changed Files
-            {activeSession.changedFiles.length > 0 && (
-              <span className="chat-files-badge">{activeSession.changedFiles.length}</span>
-            )}
-          </button>
-          {editingTitle ? (
+          {editingTitle && (
             <input
               ref={titleInputRef}
               className="chat-title-input"
@@ -342,8 +348,6 @@ export function ChatPanel(): JSX.Element {
               onBlur={commitTitle}
               onKeyDown={e => { if (e.key === 'Enter') commitTitle(); if (e.key === 'Escape') setEditingTitle(false) }}
             />
-          ) : (
-            <button className="chat-rename-btn" onClick={startEditTitle} title="Rename thread">✎</button>
           )}
         </div>
       )}
@@ -370,7 +374,7 @@ export function ChatPanel(): JSX.Element {
             <div className="chat-empty">
               <div className="chat-empty-icon">✦</div>
               <div className="chat-empty-text">Connect an AI provider</div>
-              <div className="chat-empty-hint">Add your API key to get started</div>
+              <div className="chat-empty-hint">Sign in with Claude, OpenAI, or Gemini</div>
               <button className="chat-connect-btn" onClick={() => setShowSubs(true)}>Connect AI</button>
             </div>
           )}
@@ -394,10 +398,14 @@ export function ChatPanel(): JSX.Element {
         </div>
       )}
 
-      {panelTab === 'files' && (
+      {/* Changes tab */}
+      {panelTab === 'changes' && (
         <div className="chat-files-list">
           {(activeSession?.changedFiles.length ?? 0) === 0 ? (
-            <div className="chat-files-empty">No files changed in this session</div>
+            <div className="chat-files-empty">
+              <div className="chat-empty-icon" style={{ fontSize: 24, marginBottom: 8 }}>⎔</div>
+              <div>No changes in this session</div>
+            </div>
           ) : (
             activeSession!.changedFiles.map(f => {
               const name = f.split(/[/\\]/).pop() ?? f
@@ -412,7 +420,7 @@ export function ChatPanel(): JSX.Element {
                   }}
                   title={f}
                 >
-                  <span className="chat-file-icon">📄</span>
+                  <span className="chat-file-modified">M</span>
                   <span className="chat-file-name">{name}</span>
                   {openedFile?.isDirty && <span className="chat-file-dirty">●</span>}
                 </button>
@@ -422,8 +430,31 @@ export function ChatPanel(): JSX.Element {
         </div>
       )}
 
-      {/* Input area */}
-      <div className="chat-input-area">
+      {/* Console tab */}
+      {panelTab === 'console' && (
+        <div className="chat-console-hint">
+          <div className="chat-empty-icon" style={{ fontSize: 24, marginBottom: 8 }}>⌨</div>
+          <div style={{ fontSize: 13, color: 'var(--kode-text-dim)', marginBottom: 8 }}>Terminal</div>
+          <div style={{ fontSize: 12, color: 'var(--kode-text-muted)' }}>
+            Open a terminal from the View menu or press Ctrl+`
+          </div>
+        </div>
+      )}
+
+      {/* Code tab */}
+      {panelTab === 'code' && (
+        <div className="chat-console-hint">
+          <div className="chat-empty-icon" style={{ fontSize: 24, marginBottom: 8 }}>⟨/⟩</div>
+          <div style={{ fontSize: 13, color: 'var(--kode-text-dim)', marginBottom: 8 }}>Active File</div>
+          <div style={{ fontSize: 12, color: 'var(--kode-text-muted)' }}>
+            {openFiles.find(f => f.id === useEditorStore.getState().activeFileId)?.name ?? 'No file open'}
+          </div>
+        </div>
+      )}
+
+      {/* Input area — only on chat tab */}
+      {panelTab !== 'chat' && null}
+      <div className="chat-input-area" style={{ display: panelTab === 'chat' ? undefined : 'none' }}>
         <div className="chat-input-box">
           <textarea
             className="chat-input"

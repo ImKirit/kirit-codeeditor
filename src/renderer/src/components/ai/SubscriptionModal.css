@@ -217,69 +217,78 @@
 }
 
 /* ── Connect step ───────────────────────────────────────── */
-.sub-provider-header {
+.sub-connect-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 4px 0 12px;
+  border-bottom: 1px solid var(--kode-border, #e0e0e0);
+}
+
+.sub-connect-icon { font-size: 36px; flex-shrink: 0; }
+
+.sub-connect-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--kode-text, #1a1a1a);
+}
+
+.sub-connect-sub {
+  font-size: 12px;
+  color: var(--kode-text-muted, #999999);
+  margin-top: 2px;
+}
+
+/* Numbered steps */
+.sub-step {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  background: var(--kode-surface-2, #f5f5f5);
+  border-radius: 10px;
+  border: 1px solid var(--kode-border, #e0e0e0);
+  transition: opacity 0.2s;
+}
+
+.sub-step--dim { opacity: 0.45; pointer-events: none; }
+
+.sub-step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--kode-accent, #0066b8);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 8px 0 4px;
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
-.sub-provider-icon-lg { font-size: 40px; }
-.sub-provider-name-lg {
-  font-size: 18px;
-  color: var(--kode-text, #1a1a1a);
-  font-weight: 700;
-}
-
-.sub-auth-tabs {
-  display: flex;
-  background: var(--kode-surface-2, #f5f5f5);
-  border-radius: 8px;
-  padding: 3px;
-  gap: 3px;
-}
-
-.sub-auth-tab {
+.sub-step-body {
   flex: 1;
-  padding: 7px;
-  background: none;
-  border: none;
-  border-radius: 6px;
-  color: var(--kode-text-dim, #666666);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.1s, color 0.1s;
-}
-
-.sub-auth-tab.active {
-  background: var(--kode-surface, #ffffff);
-  color: var(--kode-text, #1a1a1a);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-/* OAuth UI */
-.sub-oauth {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  padding: 8px 0;
+  gap: 8px;
 }
 
-.sub-oauth-desc {
+.sub-step-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--kode-text, #1a1a1a);
+}
+
+.sub-step-desc {
   font-size: 12px;
   color: var(--kode-text-dim, #666666);
-  text-align: center;
-  line-height: 1.6;
-  margin: 0;
+  line-height: 1.5;
 }
 
-.sub-oauth-btn {
-  width: 100%;
-  padding: 11px;
+.sub-signin-btn {
+  align-self: flex-start;
+  padding: 8px 16px;
   border: none;
   border-radius: 8px;
   color: #fff;
@@ -287,33 +296,12 @@
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
   transition: filter 0.15s;
 }
 
-.sub-oauth-btn:hover { filter: brightness(1.1); }
+.sub-signin-btn:hover { filter: brightness(1.1); }
 
-.sub-link {
-  background: none;
-  border: none;
-  color: var(--kode-text-muted, #999999);
-  font-size: 11px;
-  cursor: pointer;
-  font-family: inherit;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-/* Form */
-.sub-form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
+/* Form fields (inside steps) */
 .sub-field {
   display: flex;
   flex-direction: column;
@@ -343,24 +331,12 @@
   box-shadow: 0 0 0 2px rgba(0, 102, 184, 0.12);
 }
 
+.sub-input:disabled { opacity: 0.5; cursor: not-allowed; }
+
 .sub-key-hint {
   font-size: 11px;
   color: var(--kode-text-muted, #aaaaaa);
 }
-
-.sub-key-link-btn {
-  background: none;
-  border: none;
-  color: var(--kode-accent, #0066b8);
-  font-size: 11px;
-  cursor: pointer;
-  font-family: inherit;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  padding: 0;
-}
-
-.sub-key-link-btn:hover { opacity: 0.8; }
 
 .sub-err {
   font-size: 12px;
@@ -373,7 +349,7 @@
 
 .sub-btn-connect {
   width: 100%;
-  padding: 11px;
+  padding: 12px;
   border: none;
   border-radius: 8px;
   color: #fff;
@@ -381,13 +357,13 @@
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  margin-top: 2px;
+  background: var(--kode-btn, #1a1a1a);
   transition: filter 0.15s, box-shadow 0.15s;
 }
 
-.sub-btn-connect:hover {
+.sub-btn-connect:hover:not(:disabled) {
   filter: brightness(1.08);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.sub-btn-connect:disabled { opacity: 0.5; cursor: default; filter: none; box-shadow: none; }
+.sub-btn-connect:disabled { opacity: 0.4; cursor: default; filter: none; box-shadow: none; }

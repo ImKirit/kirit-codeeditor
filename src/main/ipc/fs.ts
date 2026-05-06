@@ -9,10 +9,8 @@ export function registerFsHandlers(): void {
     const win = BrowserWindow.fromWebContents(event.sender)
     win?.focus()
     try {
-      const result = await dialog.showOpenDialog(win!, {
-        properties: ['openDirectory'],
-        title: 'Open Folder'
-      })
+      const opts = { properties: ['openDirectory'] as const, title: 'Open Folder' }
+      const result = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts)
       if (result.canceled || !result.filePaths.length) return null
       const folderPath = result.filePaths[0]
       addRecentFolder(folderPath).catch(() => {})
@@ -26,10 +24,8 @@ export function registerFsHandlers(): void {
     const win = BrowserWindow.fromWebContents(event.sender)
     win?.focus()
     try {
-      const result = await dialog.showOpenDialog(win!, {
-        properties: ['openFile'],
-        title: 'Open File'
-      })
+      const opts = { properties: ['openFile'] as const, title: 'Open File' }
+      const result = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts)
       if (result.canceled || !result.filePaths.length) return null
       return result.filePaths[0]
     } catch {

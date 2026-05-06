@@ -104,10 +104,10 @@
 
 .panel-empty-btn {
   padding: 8px 18px;
-  background: var(--kode-accent, #0066b8);
+  background: var(--kode-btn, #1a1a1a);
   border: none;
   border-radius: 8px;
-  color: #fff;
+  color: var(--kode-btn-fg, #ffffff);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -116,6 +116,6 @@
 }
 
 .panel-empty-btn:hover {
-  background: var(--kode-accent-hover, #0052a3);
-  box-shadow: 0 2px 8px rgba(0, 102, 184, 0.25);
+  background: var(--kode-btn-hover, #333333);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
 }

@@ -6,6 +6,78 @@
   overflow: hidden;
 }
 
+/* ── TERRA-style top tabs ───────────────────────────────── */
+.chat-terra-tabs {
+  display: flex;
+  background: var(--kode-bg, #f3f3f3);
+  border-bottom: 1px solid var(--kode-border, #e0e0e0);
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.chat-terra-tab {
+  flex: 1;
+  padding: 10px 4px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--kode-text-muted, #999999);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+  white-space: nowrap;
+}
+
+.chat-terra-tab:hover:not(.active) {
+  color: var(--kode-text-dim, #555555);
+  background: var(--kode-surface-2, rgba(0,0,0,0.03));
+}
+
+.chat-terra-tab.active {
+  color: var(--kode-text, #1a1a1a);
+  border-bottom-color: var(--kode-btn, #1a1a1a);
+  background: var(--kode-surface, #ffffff);
+}
+
+.chat-terra-badge {
+  background: var(--kode-btn, #1a1a1a);
+  color: var(--kode-btn-fg, #ffffff);
+  font-size: 9px;
+  border-radius: 8px;
+  padding: 1px 5px;
+  min-width: 14px;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* ── Console/Code hint placeholder ─────────────────────── */
+.chat-console-hint {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  color: var(--kode-text-muted, #aaaaaa);
+  text-align: center;
+}
+
+/* ── Changed files modified badge ───────────────────────── */
+.chat-file-modified {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--kode-warning, #e67e22);
+  width: 16px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
 /* ── Header / toolbar ───────────────────────────────────── */
 .chat-header {
   display: flex;
@@ -338,10 +410,10 @@
 
 .chat-connect-btn {
   padding: 8px 18px;
-  background: var(--kode-accent, #0066b8);
+  background: var(--kode-btn, #1a1a1a);
   border: none;
   border-radius: 8px;
-  color: #fff;
+  color: var(--kode-btn-fg, #ffffff);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -351,8 +423,8 @@
 }
 
 .chat-connect-btn:hover {
-  background: var(--kode-accent-hover, #0052a3);
-  box-shadow: 0 2px 8px rgba(0, 102, 184, 0.25);
+  background: var(--kode-btn-hover, #333333);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* ── Message rows ───────────────────────────────────────── */
@@ -512,10 +584,10 @@
 .chat-pill-send {
   margin-left: auto;
   padding: 4px 14px;
-  background: var(--kode-accent, #0066b8);
+  background: var(--kode-btn, #1a1a1a);
   border: none;
   border-radius: 20px;
-  color: #fff;
+  color: var(--kode-btn-fg, #ffffff);
   font-size: 12px;
   font-weight: 600;
   font-family: inherit;
@@ -523,7 +595,7 @@
   transition: background 0.12s;
 }
 
-.chat-pill-send:hover { background: var(--kode-accent-hover, #0052a3); }
+.chat-pill-send:hover { background: var(--kode-btn-hover, #333333); }
 .chat-pill-send:disabled { opacity: 0.4; cursor: default; }
 
 .chat-pill-stop {

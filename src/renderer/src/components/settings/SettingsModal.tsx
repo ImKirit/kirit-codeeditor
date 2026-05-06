@@ -8,8 +8,8 @@ interface Props {
 
 export function SettingsModal({ onClose }: Props): JSX.Element {
   const {
-    theme, fontSize, wordWrap, minimap, autoSave, tabSize,
-    setTheme, setFontSize, setWordWrap, setMinimap, setAutoSave, setTabSize
+    theme, customMain, customAccent, fontSize, wordWrap, minimap, autoSave, tabSize,
+    setTheme, setCustomColors, setFontSize, setWordWrap, setMinimap, setAutoSave, setTabSize
   } = useSettingsStore()
 
   return (
@@ -34,12 +34,41 @@ export function SettingsModal({ onClose }: Props): JSX.Element {
                     className={`settings-theme-btn${theme === t.id ? ' active' : ''}`}
                     onClick={() => setTheme(t.id)}
                   >
-                    <ThemePreview vars={t.vars} />
+                    <ThemePreview vars={t.vars} isCustom={t.id === 'custom'} customMain={customMain} customAccent={customAccent} />
                     <span>{t.name}</span>
                   </button>
                 ))}
               </div>
             </div>
+
+            {theme === 'custom' && (
+              <div className="settings-custom-colors">
+                <div className="settings-color-row">
+                  <label className="settings-label">Background Color</label>
+                  <div className="settings-color-pick">
+                    <input
+                      type="color"
+                      value={customMain}
+                      onChange={e => setCustomColors(e.target.value, customAccent)}
+                      className="settings-color-input"
+                    />
+                    <span className="settings-color-val">{customMain}</span>
+                  </div>
+                </div>
+                <div className="settings-color-row">
+                  <label className="settings-label">Accent Color</label>
+                  <div className="settings-color-pick">
+                    <input
+                      type="color"
+                      value={customAccent}
+                      onChange={e => setCustomColors(customMain, e.target.value)}
+                      className="settings-color-input"
+                    />
+                    <span className="settings-color-val">{customAccent}</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="settings-row">
               <label className="settings-label">Font Size</label>
@@ -106,24 +135,25 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
   )
 }
 
-function ThemePreview({ vars }: { vars: Record<string, string> }): JSX.Element {
+function ThemePreview({ vars, isCustom, customMain, customAccent }: { vars: Record<string, string>; isCustom?: boolean; customMain?: string; customAccent?: string }): JSX.Element {
+  const bg = isCustom ? (customMain ?? vars['--kode-bg']) : vars['--kode-bg']
+  const surface = vars['--kode-surface']
+  const accent = isCustom ? (customAccent ?? vars['--kode-accent']) : vars['--kode-accent']
+  const border = vars['--kode-border']
+  const text = vars['--kode-text']
+  const textDim = vars['--kode-text-dim']
+
   return (
-    <div
-      className="theme-preview"
-      style={{
-        background: vars['--kode-bg'],
-        borderColor: vars['--kode-border'],
-      }}
-    >
-      <div className="theme-preview-bar" style={{ background: vars['--kode-surface'] }}>
-        <div style={{ background: vars['--kode-accent'], borderRadius: 2, width: 24, height: 4 }} />
+    <div className="theme-preview" style={{ background: bg, borderColor: border }}>
+      <div className="theme-preview-bar" style={{ background: surface }}>
+        <div style={{ background: accent, borderRadius: 2, width: 24, height: 4 }} />
       </div>
       <div className="theme-preview-content">
-        <div style={{ background: vars['--kode-surface'], width: 20, height: '100%', borderRight: `1px solid ${vars['--kode-border']}` }} />
+        <div style={{ background: surface, width: 20, height: '100%', borderRight: `1px solid ${border}` }} />
         <div style={{ flex: 1, padding: '4px 6px', display: 'flex', flexDirection: 'column', gap: 3 }}>
-          {['--kode-accent', '--kode-text', '--kode-text-dim'].map(v => (
-            <div key={v} style={{ background: vars[v], height: 3, borderRadius: 2, opacity: 0.8, width: v === '--kode-accent' ? '60%' : v === '--kode-text' ? '100%' : '75%' }} />
-          ))}
+          <div style={{ background: accent, height: 3, borderRadius: 2, opacity: 0.8, width: '60%' }} />
+          <div style={{ background: text, height: 3, borderRadius: 2, opacity: 0.8, width: '100%' }} />
+          <div style={{ background: textDim, height: 3, borderRadius: 2, opacity: 0.8, width: '75%' }} />
         </div>
       </div>
     </div>
