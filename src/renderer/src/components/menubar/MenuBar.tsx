@@ -5,7 +5,7 @@ import { useUIStore } from '../../store/ui'
 import { useLayoutStore } from '../../store/layout'
 import {
   openTerminal, closePanel, dispatchNewTerminalTab,
-  openAIChat, openExplorer
+  openAIChat, openExplorer, openGitPanel
 } from '../../lib/layoutApi'
 import './MenuBar.css'
 
@@ -31,7 +31,7 @@ export function MenuBar(): JSX.Element {
   const { openFolder, activeFileId, openFiles, closeFile, markSaved } = useEditorStore()
   const { openPalette } = useCommandStore()
   const { openQuickOpen, openGlobalSearch } = useUIStore()
-  const { explorerOpen, terminalOpen, aiChatOpen } = useLayoutStore()
+  const { explorerOpen, terminalOpen, aiChatOpen, gitOpen } = useLayoutStore()
 
   // Close on outside click
   useEffect(() => {
@@ -120,6 +120,11 @@ export function MenuBar(): JSX.Element {
           label: 'Explorer',
           checked: explorerOpen,
           action: () => explorerOpen ? closePanel('fileTree') : openExplorer()
+        },
+        {
+          label: 'Source Control',
+          checked: gitOpen,
+          action: () => gitOpen ? closePanel('git') : openGitPanel()
         },
         {
           label: 'AI Chat',

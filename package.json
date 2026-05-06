@@ -34,6 +34,7 @@
     "dockview": "^6.0.3",
     "monaco-editor": "^0.55.1",
     "openai": "^6.36.0",
+    "simple-git": "^3.36.0",
     "zustand": "^5.0.13"
   },
   "devDependencies": {

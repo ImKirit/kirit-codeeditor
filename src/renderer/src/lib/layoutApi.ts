@@ -51,3 +51,9 @@ export function openExplorer(): void {
     position: { direction: 'left', referencePanel: 'editor' }
   })
 }
+
+export function openGitPanel(): void {
+  openPanel('git', 'git', 'Source Control', {
+    position: { direction: 'left', referencePanel: 'editor' }
+  })
+}

@@ -23,7 +23,25 @@ const api = {
     }
   },
   git: {
-    branch: (cwd: string): Promise<string | null> => ipcRenderer.invoke('git:branch', cwd)
+    branch: (cwd: string): Promise<string | null> => ipcRenderer.invoke('git:branch', cwd),
+    status: (cwd: string): Promise<Array<{ path: string; status: string; staged: boolean }>> =>
+      ipcRenderer.invoke('git:status', cwd),
+    diff: (cwd: string, filePath: string, staged: boolean): Promise<string> =>
+      ipcRenderer.invoke('git:diff', cwd, filePath, staged),
+    stage: (cwd: string, filePath: string): Promise<void> =>
+      ipcRenderer.invoke('git:stage', cwd, filePath),
+    unstage: (cwd: string, filePath: string): Promise<void> =>
+      ipcRenderer.invoke('git:unstage', cwd, filePath),
+    commit: (cwd: string, message: string): Promise<string> =>
+      ipcRenderer.invoke('git:commit', cwd, message),
+    push: (cwd: string): Promise<string> => ipcRenderer.invoke('git:push', cwd),
+    pull: (cwd: string): Promise<string> => ipcRenderer.invoke('git:pull', cwd),
+    log: (cwd: string, limit: number): Promise<Array<{ hash: string; message: string; author: string; date: string }>> =>
+      ipcRenderer.invoke('git:log', cwd, limit),
+    branches: (cwd: string): Promise<Array<{ name: string; current: boolean }>> =>
+      ipcRenderer.invoke('git:branches', cwd),
+    checkout: (cwd: string, branch: string): Promise<void> =>
+      ipcRenderer.invoke('git:checkout', cwd, branch)
   },
   ai: {
     getSubscriptions: (): Promise<import('../shared/types').Subscription[]> =>

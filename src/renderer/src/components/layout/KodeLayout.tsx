@@ -5,6 +5,7 @@ import { FileTreePanel } from './panels/FileTreePanel'
 import { EditorPanel } from './panels/EditorPanel'
 import { AIChatPanel } from './panels/AIChatPanel'
 import { TerminalPanel } from './panels/TerminalPanel'
+import { GitPanelWrapper } from './panels/GitPanel'
 import { setLayoutApi } from '../../lib/layoutApi'
 import { useLayoutStore } from '../../store/layout'
 import './KodeLayout.css'
@@ -15,7 +16,8 @@ const COMPONENTS: Record<string, React.FunctionComponent<IDockviewPanelProps>> =
   fileTree: FileTreePanel,
   editor: EditorPanel,
   aiChat: AIChatPanel,
-  terminal: TerminalPanel
+  terminal: TerminalPanel,
+  git: GitPanelWrapper
 }
 
 // Custom tab component for the editor — no close button
@@ -32,7 +34,7 @@ const TAB_COMPONENTS: Record<string, React.FunctionComponent<IDockviewPanelProps
 }
 
 export function KodeLayout(): JSX.Element {
-  const { setExplorerOpen, setTerminalOpen, setAiChatOpen } = useLayoutStore()
+  const { setExplorerOpen, setTerminalOpen, setAiChatOpen, setGitOpen } = useLayoutStore()
 
   const onReady = useCallback(
     (event: DockviewReadyEvent) => {
@@ -44,6 +46,7 @@ export function KodeLayout(): JSX.Element {
         if (panel.id === 'fileTree') setExplorerOpen(false)
         else if (panel.id === 'terminal') setTerminalOpen(false)
         else if (panel.id === 'aiChat') setAiChatOpen(false)
+        else if (panel.id === 'git') setGitOpen(false)
         else if (panel.id === 'editor') {
           // Editor must never be permanently removed — re-add immediately
           setTimeout(() => {
@@ -61,6 +64,7 @@ export function KodeLayout(): JSX.Element {
         if (panel.id === 'fileTree') setExplorerOpen(true)
         else if (panel.id === 'terminal') setTerminalOpen(true)
         else if (panel.id === 'aiChat') setAiChatOpen(true)
+        else if (panel.id === 'git') setGitOpen(true)
       })
 
       // Persist layout on every change
@@ -123,7 +127,7 @@ export function KodeLayout(): JSX.Element {
         // best-effort sizing
       }
     },
-    [setExplorerOpen, setTerminalOpen, setAiChatOpen]
+    [setExplorerOpen, setTerminalOpen, setAiChatOpen, setGitOpen]
   )
 
   return (
