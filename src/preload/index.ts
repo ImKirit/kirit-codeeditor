@@ -25,6 +25,14 @@ const api = {
   git: {
     branch: (cwd: string): Promise<string | null> => ipcRenderer.invoke('git:branch', cwd)
   },
+  ai: {
+    getSubscriptions: (): Promise<import('../shared/types').Subscription[]> =>
+      ipcRenderer.invoke('ai:getSubscriptions'),
+    addSubscription: (sub: import('../shared/types').Subscription): Promise<void> =>
+      ipcRenderer.invoke('ai:addSubscription', sub),
+    removeSubscription: (id: string): Promise<void> =>
+      ipcRenderer.invoke('ai:removeSubscription', id)
+  },
   search: {
     files: (rootDir: string): Promise<string[]> => ipcRenderer.invoke('search:files', rootDir),
     content: (

@@ -1,9 +1,11 @@
 import { app } from 'electron'
 import { readFile, writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
+import type { Subscription } from '../../shared/types'
 
 interface Settings {
   recentFolders: string[]
+  subscriptions: Subscription[]
 }
 
 let settingsFile: string | null = null
@@ -15,12 +17,13 @@ function getSettingsFile(): string {
   return settingsFile
 }
 
-let cache: Settings = { recentFolders: [] }
+let cache: Settings = { recentFolders: [], subscriptions: [] }
 
 export async function loadSettings(): Promise<void> {
   try {
     const raw = await readFile(getSettingsFile(), 'utf-8')
     cache = { ...cache, ...JSON.parse(raw) }
+    if (!Array.isArray(cache.subscriptions)) cache.subscriptions = []
   } catch {
     // first run — defaults are fine
   }
@@ -44,5 +47,19 @@ export async function addRecentFolder(folderPath: string): Promise<void> {
     0,
     10
   )
+  await persist()
+}
+
+export function getSubscriptions(): Subscription[] {
+  return cache.subscriptions
+}
+
+export async function addSubscription(sub: Subscription): Promise<void> {
+  cache.subscriptions = [...cache.subscriptions.filter(s => s.id !== sub.id), sub]
+  await persist()
+}
+
+export async function removeSubscription(id: string): Promise<void> {
+  cache.subscriptions = cache.subscriptions.filter(s => s.id !== id)
   await persist()
 }
