@@ -10,7 +10,7 @@ function uid(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2)
 }
 
-const PLAYBACK_CHUNK = 80 // chars per frame at ~60fps
+const PLAYBACK_CHUNK = 80
 
 function playbackWrite(
   fileId: string,
@@ -41,15 +41,18 @@ function playbackWrite(
   return () => clearTimeout(animId)
 }
 
+type PanelTab = 'chat' | 'files'
+
 export function ChatPanel(): JSX.Element {
   const {
     sessions, activeSessionId, subscriptions,
-    createSession, setActiveSession, addMessage,
-    updateLastMessage, setStreaming, streamingSessionId,
+    createSession, deleteSession, setActiveSession,
+    setSessionTitle, addMessage, updateLastMessage,
+    setStreaming, streamingSessionId, addChangedFile,
     loadSubscriptions
   } = useAIStore()
 
-  const { openFiles, openFolder, openFile } = useEditorStore()
+  const { openFiles, openFolder, openFile, jumpToLine } = useEditorStore()
 
   const [showSubs, setShowSubs] = useState(false)
   const [input, setInput] = useState('')
@@ -57,16 +60,18 @@ export function ChatPanel(): JSX.Element {
   const [selectedModel, setSelectedModel] = useState<string>('')
   const [autoFollow, setAutoFollow] = useState(true)
   const [writingFile, setWritingFile] = useState<string | null>(null)
+  const [panelTab, setPanelTab] = useState<PanelTab>('chat')
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleDraft, setTitleDraft] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const cleanupRef = useRef<(() => void) | null>(null)
   const playbackCleanupRef = useRef<(() => void) | null>(null)
+  const titleInputRef = useRef<HTMLInputElement>(null)
 
   const activeSession = sessions.find(s => s.id === activeSessionId) ?? null
   const isStreaming = streamingSessionId !== null
 
-  useEffect(() => {
-    loadSubscriptions()
-  }, [loadSubscriptions])
+  useEffect(() => { loadSubscriptions() }, [loadSubscriptions])
 
   useEffect(() => {
     if (subscriptions.length > 0 && !selectedSubId) {
@@ -81,6 +86,13 @@ export function ChatPanel(): JSX.Element {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [activeSession?.messages.length])
 
+  useEffect(() => {
+    if (editingTitle && titleInputRef.current) {
+      titleInputRef.current.focus()
+      titleInputRef.current.select()
+    }
+  }, [editingTitle])
+
   const resolveFilePath = useCallback((filePath: string): string => {
     if (/^[a-zA-Z]:[\\/]/.test(filePath) || filePath.startsWith('/')) return filePath
     if (openFolder) return openFolder + '\\' + filePath.replace(/\//g, '\\')
@@ -92,36 +104,24 @@ export function ChatPanel(): JSX.Element {
     const name = absPath.split(/[/\\]/).pop() ?? absPath
     const language = getLanguage(name)
 
-    // Write to disk
-    try {
-      await window.api.fs.writeFile(absPath, content)
-    } catch (e) {
+    try { await window.api.fs.writeFile(absPath, content) } catch (e) {
       console.error('Failed to write file:', e)
     }
 
-    // Open in editor if not already open
-    const existing = openFiles.find(f => f.id === absPath)
-    if (!existing) {
+    if (!openFiles.find(f => f.id === absPath)) {
       openFile({ id: absPath, path: absPath, name, content: '', language })
     }
 
+    if (activeSessionId) addChangedFile(activeSessionId, absPath)
+
     setWritingFile(name)
-
-    // Cancel any in-progress playback
     playbackCleanupRef.current?.()
-
-    playbackCleanupRef.current = playbackWrite(
-      absPath,
-      content,
-      autoFollow,
-      () => {
-        setWritingFile(null)
-        playbackCleanupRef.current = null
-        // Mark as saved since it's been written to disk
-        useEditorStore.getState().markSaved(absPath)
-      }
-    )
-  }, [openFiles, openFile, resolveFilePath, autoFollow])
+    playbackCleanupRef.current = playbackWrite(absPath, content, autoFollow, () => {
+      setWritingFile(null)
+      playbackCleanupRef.current = null
+      useEditorStore.getState().markSaved(absPath)
+    })
+  }, [openFiles, openFile, resolveFilePath, autoFollow, activeSessionId, addChangedFile])
 
   const getOrCreateSession = (): Session => {
     if (activeSession) return activeSession
@@ -130,6 +130,15 @@ export function ChatPanel(): JSX.Element {
     const provider = PROVIDERS.find(p => p.id === sub.provider)
     const model = selectedModel || provider?.models[0]?.id || 'unknown'
     return createSession({ provider: sub.provider, model, subscriptionId: sub.id })
+  }
+
+  const handleNewSession = () => {
+    if (!subscriptions.length) { setShowSubs(true); return }
+    const sub = subscriptions.find(s => s.id === selectedSubId) ?? subscriptions[0]
+    const provider = PROVIDERS.find(p => p.id === sub.provider)
+    const model = selectedModel || provider?.models[0]?.id || 'unknown'
+    createSession({ provider: sub.provider, model, subscriptionId: sub.id })
+    setPanelTab('chat')
   }
 
   const sendMessage = async () => {
@@ -141,23 +150,12 @@ export function ChatPanel(): JSX.Element {
     try { session = getOrCreateSession() } catch { setShowSubs(true); return }
 
     setInput('')
+    setPanelTab('chat')
 
-    addMessage(session.id, {
-      id: uid(),
-      role: 'user',
-      content: text,
-      timestamp: Date.now()
-    })
+    addMessage(session.id, { id: uid(), role: 'user', content: text, timestamp: Date.now() })
 
     const assistantMsgId = uid()
-    addMessage(session.id, {
-      id: assistantMsgId,
-      role: 'assistant',
-      content: '',
-      timestamp: Date.now(),
-      isStreaming: true
-    })
-
+    addMessage(session.id, { id: assistantMsgId, role: 'assistant', content: '', timestamp: Date.now(), isStreaming: true })
     setStreaming(session.id)
 
     const updatedSession = useAIStore.getState().sessions.find(s => s.id === session.id)!
@@ -173,14 +171,11 @@ export function ChatPanel(): JSX.Element {
           .find(m => m.id === assistantMsgId)?.content ?? ''
         updateLastMessage(session.id, { content: current + chunk.content })
       } else if (chunk.type === 'write_file') {
-        const path = chunk.path as string
-        const content = chunk.content as string
-        handleWriteFile(path, content)
-        // Add a note in the chat about the file write
+        handleWriteFile(chunk.path as string, chunk.content as string)
         const current = useAIStore.getState().sessions
           .find(s => s.id === session.id)?.messages
           .find(m => m.id === assistantMsgId)?.content ?? ''
-        const note = `\n\n📝 Writing \`${path}\`…`
+        const note = `\n📝 Writing \`${chunk.path}\`…`
         if (!current.includes(note.trim())) {
           updateLastMessage(session.id, { content: current + note })
         }
@@ -190,10 +185,7 @@ export function ChatPanel(): JSX.Element {
         if (cleanupRef.current) { cleanupRef.current(); cleanupRef.current = null }
       } else if (chunk.type === 'error') {
         const errMsg = typeof chunk.error === 'string' ? chunk.error : 'Unknown error'
-        updateLastMessage(session.id, {
-          content: `Error: ${errMsg}`,
-          isStreaming: false
-        })
+        updateLastMessage(session.id, { content: `Error: ${errMsg}`, isStreaming: false })
         setStreaming(null)
         if (cleanupRef.current) { cleanupRef.current(); cleanupRef.current = null }
       }
@@ -206,10 +198,7 @@ export function ChatPanel(): JSX.Element {
       model: session.model,
       messages: apiMessages
     }).catch(err => {
-      updateLastMessage(session.id, {
-        content: `Failed to start chat: ${err}`,
-        isStreaming: false
-      })
+      updateLastMessage(session.id, { content: `Failed to start chat: ${err}`, isStreaming: false })
       setStreaming(null)
     })
   }
@@ -225,11 +214,21 @@ export function ChatPanel(): JSX.Element {
     setWritingFile(null)
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault()
-      sendMessage()
+  const startEditTitle = () => {
+    if (!activeSession) return
+    setTitleDraft(activeSession.title)
+    setEditingTitle(true)
+  }
+
+  const commitTitle = () => {
+    if (activeSession && titleDraft.trim()) {
+      setSessionTitle(activeSession.id, titleDraft.trim())
     }
+    setEditingTitle(false)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); sendMessage() }
   }
 
   const activeSub: Subscription | undefined = subscriptions.find(s => s.id === selectedSubId)
@@ -242,29 +241,17 @@ export function ChatPanel(): JSX.Element {
         <div className="chat-header-selectors">
           {subscriptions.length > 0 ? (
             <>
-              <select
-                className="chat-select"
-                value={selectedSubId}
-                onChange={e => {
-                  setSelectedSubId(e.target.value)
-                  const sub = subscriptions.find(s => s.id === e.target.value)
-                  const prov = PROVIDERS.find(p => p.id === sub?.provider)
-                  if (prov?.models[0]) setSelectedModel(prov.models[0].id)
-                }}
-              >
-                {subscriptions.map(s => (
-                  <option key={s.id} value={s.id}>{s.label}</option>
-                ))}
+              <select className="chat-select" value={selectedSubId} onChange={e => {
+                setSelectedSubId(e.target.value)
+                const sub = subscriptions.find(s => s.id === e.target.value)
+                const prov = PROVIDERS.find(p => p.id === sub?.provider)
+                if (prov?.models[0]) setSelectedModel(prov.models[0].id)
+              }}>
+                {subscriptions.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
               </select>
               {activeProvider && (
-                <select
-                  className="chat-select"
-                  value={selectedModel}
-                  onChange={e => setSelectedModel(e.target.value)}
-                >
-                  {activeProvider.models.map(m => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
-                  ))}
+                <select className="chat-select" value={selectedModel} onChange={e => setSelectedModel(e.target.value)}>
+                  {activeProvider.models.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                 </select>
               )}
             </>
@@ -277,14 +264,65 @@ export function ChatPanel(): JSX.Element {
             className={`chat-follow-btn${autoFollow ? ' active' : ''}`}
             onClick={() => setAutoFollow(v => !v)}
             title={autoFollow ? 'Auto-follow: on' : 'Auto-follow: off'}
-          >
-            ↕
-          </button>
-          <button className="chat-header-btn" onClick={() => setShowSubs(true)} title="Manage subscriptions">
-            ⚙
-          </button>
+          >↕</button>
+          <button className="chat-header-btn" onClick={handleNewSession} title="New chat">+</button>
+          <button className="chat-header-btn" onClick={() => setShowSubs(true)} title="Manage subscriptions">⚙</button>
         </div>
       </div>
+
+      {/* Session tabs (when multiple) */}
+      {sessions.length > 0 && (
+        <div className="chat-session-tabs">
+          {sessions.map(s => (
+            <button
+              key={s.id}
+              className={`chat-session-tab${s.id === activeSessionId ? ' active' : ''}`}
+              onClick={() => setActiveSession(s.id)}
+              onDoubleClick={() => { setActiveSession(s.id); startEditTitle() }}
+              title={s.title}
+            >
+              <span className="chat-session-tab-text">{s.title}</span>
+              {sessions.length > 1 && (
+                <span
+                  className="chat-session-tab-close"
+                  onClick={e => { e.stopPropagation(); deleteSession(s.id) }}
+                >×</span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Panel sub-tabs */}
+      {activeSession && (
+        <div className="chat-panel-tabs">
+          <button
+            className={`chat-panel-tab${panelTab === 'chat' ? ' active' : ''}`}
+            onClick={() => setPanelTab('chat')}
+          >Chat</button>
+          <button
+            className={`chat-panel-tab${panelTab === 'files' ? ' active' : ''}`}
+            onClick={() => setPanelTab('files')}
+          >
+            Changed Files
+            {activeSession.changedFiles.length > 0 && (
+              <span className="chat-files-badge">{activeSession.changedFiles.length}</span>
+            )}
+          </button>
+          {editingTitle ? (
+            <input
+              ref={titleInputRef}
+              className="chat-title-input"
+              value={titleDraft}
+              onChange={e => setTitleDraft(e.target.value)}
+              onBlur={commitTitle}
+              onKeyDown={e => { if (e.key === 'Enter') commitTitle(); if (e.key === 'Escape') setEditingTitle(false) }}
+            />
+          ) : (
+            <button className="chat-rename-btn" onClick={startEditTitle} title="Rename session">✎</button>
+          )}
+        </div>
+      )}
 
       {/* Writing indicator */}
       {writingFile && (
@@ -294,52 +332,67 @@ export function ChatPanel(): JSX.Element {
         </div>
       )}
 
-      {/* Session tabs */}
-      {sessions.length > 1 && (
-        <div className="chat-session-tabs">
-          {sessions.map(s => (
-            <button
-              key={s.id}
-              className={`chat-session-tab${s.id === activeSessionId ? ' active' : ''}`}
-              onClick={() => setActiveSession(s.id)}
-            >
-              {s.title}
-            </button>
+      {/* Content */}
+      {panelTab === 'chat' && (
+        <div className="chat-messages">
+          {!activeSession && subscriptions.length > 0 && (
+            <div className="chat-empty">
+              <div className="chat-empty-icon">&#9670;</div>
+              <div className="chat-empty-text">Start a conversation</div>
+              <div className="chat-empty-hint">Ctrl+Enter to send</div>
+            </div>
+          )}
+          {!activeSession && subscriptions.length === 0 && (
+            <div className="chat-empty">
+              <div className="chat-empty-icon">&#9670;</div>
+              <div className="chat-empty-text">Connect an AI provider</div>
+              <button className="chat-connect-btn" onClick={() => setShowSubs(true)}>Add Subscription</button>
+            </div>
+          )}
+          {activeSession?.messages.map(msg => (
+            <div key={msg.id} className={`chat-msg chat-msg--${msg.role}${msg.isStreaming ? ' chat-msg--streaming' : ''}`}>
+              <div className="chat-msg-label">
+                {msg.role === 'user' ? 'You' : (activeProvider?.name ?? 'Assistant')}
+                {msg.isStreaming && <span className="chat-msg-cursor" />}
+              </div>
+              <div className="chat-msg-content">
+                {msg.content || (msg.isStreaming ? <span className="chat-thinking">…</span> : '')}
+              </div>
+            </div>
           ))}
+          <div ref={messagesEndRef} />
         </div>
       )}
 
-      {/* Messages */}
-      <div className="chat-messages">
-        {!activeSession && subscriptions.length > 0 && (
-          <div className="chat-empty">
-            <div className="chat-empty-icon">&#9670;</div>
-            <div className="chat-empty-text">Start a conversation</div>
-            <div className="chat-empty-hint">Ctrl+Enter to send</div>
-          </div>
-        )}
-        {!activeSession && subscriptions.length === 0 && (
-          <div className="chat-empty">
-            <div className="chat-empty-icon">&#9670;</div>
-            <div className="chat-empty-text">Connect an AI provider</div>
-            <button className="chat-connect-btn" onClick={() => setShowSubs(true)}>
-              Add Subscription
-            </button>
-          </div>
-        )}
-        {activeSession?.messages.map(msg => (
-          <div key={msg.id} className={`chat-msg chat-msg--${msg.role}${msg.isStreaming ? ' chat-msg--streaming' : ''}`}>
-            <div className="chat-msg-label">
-              {msg.role === 'user' ? 'You' : (activeProvider?.name ?? 'Assistant')}
-              {msg.isStreaming && <span className="chat-msg-cursor" />}
-            </div>
-            <div className="chat-msg-content">
-              {msg.content || (msg.isStreaming ? <span className="chat-thinking">…</span> : '')}
-            </div>
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
+      {panelTab === 'files' && (
+        <div className="chat-files-list">
+          {(activeSession?.changedFiles.length ?? 0) === 0 ? (
+            <div className="chat-files-empty">No files changed in this session</div>
+          ) : (
+            activeSession!.changedFiles.map(f => {
+              const name = f.split(/[/\\]/).pop() ?? f
+              const openedFile = openFiles.find(of => of.id === f)
+              return (
+                <button
+                  key={f}
+                  className="chat-file-item"
+                  onClick={() => {
+                    if (openedFile) {
+                      useEditorStore.getState().setActiveFile(f)
+                    }
+                    setPanelTab('chat')
+                  }}
+                  title={f}
+                >
+                  <span className="chat-file-icon">📄</span>
+                  <span className="chat-file-name">{name}</span>
+                  {openedFile?.isDirty && <span className="chat-file-dirty">●</span>}
+                </button>
+              )
+            })
+          )}
+        </div>
+      )}
 
       {/* Input */}
       <div className="chat-input-area">
@@ -353,17 +406,9 @@ export function ChatPanel(): JSX.Element {
           disabled={isStreaming}
         />
         {isStreaming ? (
-          <button className="chat-stop-btn" onClick={cancelStream} title="Stop generating">
-            ■
-          </button>
+          <button className="chat-stop-btn" onClick={cancelStream} title="Stop generating">■</button>
         ) : (
-          <button
-            className="chat-send-btn"
-            onClick={sendMessage}
-            disabled={!input.trim()}
-          >
-            ↑
-          </button>
+          <button className="chat-send-btn" onClick={sendMessage} disabled={!input.trim()}>↑</button>
         )}
       </div>
 

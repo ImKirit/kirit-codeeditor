@@ -47,6 +47,7 @@ export interface Session {
   model: string
   subscriptionId: string
   messages: Message[]
+  changedFiles: string[]
   createdAt: number
   updatedAt: number
 }

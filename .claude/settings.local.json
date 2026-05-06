@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(dir out *)",
+      "Bash(npm uninstall *)",
+      "Bash(node -e \"const d = require\\('./node_modules/dockview/package.json'\\); console.log\\(d.version\\)\")",
+      "Bash(node -e \"const d = require\\('c:/Users/borad/OneDrive/Dokumente/kirit/Big Projects/CodeEditor/kirit-codeeditor/node_modules/dockview'\\); console.log\\(Object.keys\\(d\\).filter\\(k => k.includes\\('Dock'\\) || k.includes\\('Ready'\\) || k.includes\\('Panel'\\)\\).join\\('\\\\n'\\)\\)\")",
+      "Bash(node -e \"const d = require\\('c:/Users/borad/OneDrive/Dokumente/kirit/Big Projects/CodeEditor/kirit-codeeditor/node_modules/dockview'\\); const types = Object.keys\\(d\\).filter\\(k => k.startsWith\\('I'\\) || k.includes\\('Ready'\\) || k.includes\\('Props'\\) || k.includes\\('Event'\\)\\); console.log\\(types.join\\('\\\\n'\\)\\)\")",
+      "Bash(node -e \"const fs = require\\('fs'\\); const content = fs.readFileSync\\('c:/Users/borad/OneDrive/Dokumente/kirit/Big Projects/CodeEditor/kirit-codeeditor/node_modules/dockview/dist/cjs/dockview.js', 'utf-8'\\).substring\\(0, 2000\\); console.log\\(content\\)\")",
+      "Bash(node -e \"const fs = require\\('fs'\\); const content = fs.readFileSync\\('c:/Users/borad/OneDrive/Dokumente/kirit/Big Projects/CodeEditor/kirit-codeeditor/node_modules/dockview/dist/cjs/index.js', 'utf-8'\\).substring\\(0, 500\\); console.log\\(content\\)\")",
+      "Bash(node -e ' *)",
+      "Bash(node -e \"const p = require\\('c:/Users/borad/OneDrive/Dokumente/kirit/Big Projects/CodeEditor/kirit-codeeditor/node_modules/dockview/package.json'\\); console.log\\(p.types || p.typings || p.exports\\)\")",
+      "Bash(npx electron-rebuild *)",
+      "Bash(node -e \"const pty = require\\('@lydell/node-pty'\\); console.log\\('node-pty version:', pty\\); const p = pty.spawn\\('cmd.exe', [], {name:'xterm',cols:80,rows:30,cwd:process.cwd\\(\\)}\\); p.write\\('echo hello\\\\r'\\); setTimeout\\(\\(\\) => { p.kill\\(\\); console.log\\('PTY works!'\\); }, 1000\\);\")",
+      "Bash(npx tsc *)",
+      "Bash(dir node_modules\\\\@lydell\\\\node-pty\\\\build\\\\Release)",
+      "Bash(npm list *)",
+      "Bash(python -c \"import sys,json; p=json.load\\(sys.stdin\\); print\\(json.dumps\\(p, indent=2\\)\\)\")",
+      "Bash(node -e \"const e = require\\('c:/Users/borad/OneDrive/Dokumente/kirit/Big Projects/CodeEditor/kirit-codeeditor/node_modules/electron'\\); console.log\\(typeof e\\); console.log\\(Object.keys\\(e\\)\\)\")",
+      "Bash(python -c \"import json; p=json.load\\(open\\('package.json'\\)\\); print\\(json.dumps\\(p.get\\('scripts',{}\\), indent=2\\)\\)\")"
+    ]
+  }
+}
