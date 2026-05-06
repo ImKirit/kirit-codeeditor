@@ -1,0 +1,112 @@
+.terminal-panel-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1a1a1a;
+  overflow: hidden;
+}
+
+/* ── Tab strip ───────────────────────────────────────── */
+.terminal-tabstrip {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  background: #252526;
+  border-bottom: 1px solid #1a1a1a;
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.terminal-tabstrip::-webkit-scrollbar {
+  display: none;
+}
+
+.terminal-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px 0 12px;
+  height: 100%;
+  cursor: pointer;
+  border-right: 1px solid #1a1a1a;
+  color: #858585;
+  font-size: 11px;
+  white-space: nowrap;
+  user-select: none;
+  transition: background 0.1s;
+  min-width: 100px;
+  max-width: 180px;
+}
+
+.terminal-tab:hover {
+  background: #2a2a2a;
+  color: #cccccc;
+}
+
+.terminal-tab.active {
+  background: #1a1a1a;
+  color: #cccccc;
+  border-top: 1px solid #0e639c;
+}
+
+.terminal-tab.exited .terminal-tab-label {
+  opacity: 0.45;
+  font-style: italic;
+}
+
+.terminal-tab-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.terminal-tab-close {
+  opacity: 0;
+  font-size: 14px;
+  line-height: 1;
+  color: #858585;
+  border-radius: 2px;
+  padding: 0 2px;
+  flex-shrink: 0;
+  transition: opacity 0.1s, color 0.1s;
+}
+
+.terminal-tab:hover .terminal-tab-close,
+.terminal-tab.active .terminal-tab-close {
+  opacity: 1;
+}
+
+.terminal-tab-close:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.terminal-tab-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  color: #555;
+  font-size: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.1s;
+  line-height: 1;
+}
+
+.terminal-tab-add:hover {
+  color: #cccccc;
+}
+
+/* ── Terminal body ───────────────────────────────────── */
+.terminal-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}

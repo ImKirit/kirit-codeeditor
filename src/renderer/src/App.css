@@ -1,0 +1,52 @@
+.kode-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: #1e1e1e;
+  color: #cccccc;
+  overflow: hidden;
+}
+
+/* ── Title bar ─────────────────────────────────────────── */
+.kode-titlebar {
+  height: 30px;
+  background: #181818;
+  border-bottom: 1px solid #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  -webkit-app-region: drag;
+}
+
+.kode-titlebar-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #454545;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+/* ── Status bar ─────────────────────────────────────────── */
+.kode-statusbar {
+  height: 22px;
+  background: #0e639c;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.kode-statusbar-item {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+}
+
+.kode-statusbar-item.right {
+  margin-left: auto;
+}

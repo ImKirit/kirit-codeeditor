@@ -1,0 +1,55 @@
+appId: xyz.kirit.kode
+productName: Kode
+copyright: Copyright © 2025 ImKirit
+
+directories:
+  buildResources: resources
+  output: dist
+
+files:
+  - out/**/*
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc}'
+  - '!{.env,.env.*,.npmrc}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - '!{CHANGELOG.md,CONTRIBUTING.md}'
+
+asarUnpack:
+  - resources/**
+
+win:
+  executableName: Kode
+  icon: resources/icon.png
+nsis:
+  artifactName: '${name}-${version}-setup.${ext}'
+  shortcutName: '${productName}'
+  uninstallDisplayName: '${productName}'
+  createDesktopShortcut: always
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+
+mac:
+  icon: resources/icon.png
+  entitlementsInherit: build/entitlements.mac.plist
+  notarize: false
+dmg:
+  artifactName: '${name}-${version}.${ext}'
+
+linux:
+  icon: resources/icon.png
+  target:
+    - AppImage
+    - deb
+  maintainer: main@kirit.xyz
+  category: Development
+appImage:
+  artifactName: '${name}-${version}.${ext}'
+
+npmRebuild: false
+
+publish:
+  provider: github
+  owner: ImKirit
+  repo: kirit-codeeditor
