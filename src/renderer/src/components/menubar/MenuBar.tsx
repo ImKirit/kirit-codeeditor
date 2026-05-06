@@ -23,7 +23,7 @@ interface MenuDef {
   items: MenuItem[]
 }
 
-export function MenuBar(): JSX.Element {
+export function MenuBar({ onSettings }: { onSettings?: () => void }): JSX.Element {
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const [dropdownPos, setDropdownPos] = useState<{ left: number; top: number }>({ left: 0, top: 0 })
   const barRef = useRef<HTMLDivElement>(null)
@@ -176,10 +176,14 @@ export function MenuBar(): JSX.Element {
       label: 'Help',
       items: [
         {
+          label: 'Settings',
+          shortcut: 'Ctrl+,',
+          action: () => onSettings?.()
+        },
+        { separator: true },
+        {
           label: 'GitHub Repository',
-          action: () => {
-            // open external link — handled by Electron shell via preload if needed
-          }
+          action: () => {}
         },
         { separator: true },
         { label: 'About Kode', action: () => {} }

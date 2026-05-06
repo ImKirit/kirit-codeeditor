@@ -5,6 +5,7 @@ import type * as Monaco from 'monaco-editor'
 import { useEditorStore } from '../../store/editor'
 import { useCommandStore } from '../../store/commands'
 import { useUIStore } from '../../store/ui'
+import { useSettingsStore } from '../../store/settings'
 import { getLanguage } from '../../lib/language'
 import { FileTabs } from './FileTabs'
 import './CodeEditor.css'
@@ -54,8 +55,19 @@ const EDITOR_OPTIONS: Monaco.editor.IStandaloneEditorConstructionOptions = {
 
 export function CodeEditor(): JSX.Element {
   const { openFiles, activeFileId, updateContent, markSaved, targetLine, clearTargetLine } = useEditorStore()
+  const { fontSize, wordWrap, minimap, tabSize } = useSettingsStore()
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null)
   const activeFile = openFiles.find(f => f.id === activeFileId)
+
+  // Apply settings changes to the live editor
+  useEffect(() => {
+    editorRef.current?.updateOptions({
+      fontSize,
+      wordWrap: wordWrap ? 'on' : 'off',
+      minimap: { enabled: minimap },
+      tabSize
+    })
+  }, [fontSize, wordWrap, minimap, tabSize])
 
   const handleEditorMount = useCallback(
     (editor: Monaco.editor.IStandaloneCodeEditor) => {
