@@ -78,6 +78,20 @@ const api = {
     ): Promise<Array<{ file: string; line: number; col: number; text: string }>> =>
       ipcRenderer.invoke('search:content', rootDir, query)
   },
+  updater: {
+    onAvailable: (cb: (info: unknown) => void): (() => void) => {
+      const handler = (_: Electron.IpcRendererEvent, info: unknown): void => cb(info)
+      ipcRenderer.on('updater:available', handler)
+      return () => ipcRenderer.removeListener('updater:available', handler)
+    },
+    onDownloaded: (cb: () => void): (() => void) => {
+      const handler = (): void => cb()
+      ipcRenderer.on('updater:downloaded', handler)
+      return () => ipcRenderer.removeListener('updater:downloaded', handler)
+    },
+    download: (): void => ipcRenderer.send('updater:download'),
+    install: (): void => ipcRenderer.send('updater:install')
+  },
   fs: {
     openFolder: (): Promise<string | null> => ipcRenderer.invoke('fs:openFolder'),
     openFile: (): Promise<string | null> => ipcRenderer.invoke('fs:openFile'),

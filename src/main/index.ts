@@ -1,5 +1,6 @@
-import { app, shell, BrowserWindow, Menu } from 'electron'
+import { app, shell, BrowserWindow, Menu, ipcMain } from 'electron'
 import { join } from 'path'
+import { autoUpdater } from 'electron-updater'
 import { registerFsHandlers } from './ipc/fs'
 import { registerTerminalHandlers, watchWindowForTerminals } from './ipc/terminal'
 import { registerGitHandlers } from './ipc/git'
@@ -54,6 +55,27 @@ function createWindow(): BrowserWindow {
   return mainWindow
 }
 
+function setupAutoUpdater(win: BrowserWindow): void {
+  autoUpdater.autoDownload = false
+
+  autoUpdater.on('update-available', (info) => {
+    win.webContents.send('updater:available', info)
+  })
+  autoUpdater.on('update-downloaded', () => {
+    win.webContents.send('updater:downloaded')
+  })
+  autoUpdater.on('error', () => {
+    // silently ignore in dev / unsigned builds
+  })
+
+  ipcMain.on('updater:install', () => autoUpdater.quitAndInstall())
+  ipcMain.on('updater:download', () => autoUpdater.downloadUpdate())
+
+  if (!isDev) {
+    autoUpdater.checkForUpdates().catch(() => {})
+  }
+}
+
 app.whenReady().then(async () => {
   await loadSettings()
 
@@ -71,6 +93,7 @@ app.whenReady().then(async () => {
   const win = createWindow()
   watchWindowForTerminals(win)
   watchWindowForAI(win)
+  setupAutoUpdater(win)
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
