@@ -212,3 +212,43 @@
 
 .chat-send-btn:hover { background: #1177bb; }
 .chat-send-btn:disabled { opacity: 0.4; cursor: default; }
+
+.chat-stop-btn {
+  width: 32px;
+  height: 32px;
+  background: #5a2020;
+  border: none;
+  border-radius: 4px;
+  color: #ff7070;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.chat-stop-btn:hover { background: #6a2828; }
+
+.chat-msg-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 10px;
+  background: #7ca6c0;
+  margin-left: 3px;
+  vertical-align: middle;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.chat-thinking {
+  color: #5a5a5a;
+  font-style: italic;
+}
+
+.chat-msg--streaming .chat-msg-content {
+  opacity: 0.9;
+}

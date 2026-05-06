@@ -4,7 +4,7 @@ import { registerFsHandlers } from './ipc/fs'
 import { registerTerminalHandlers, watchWindowForTerminals } from './ipc/terminal'
 import { registerGitHandlers } from './ipc/git'
 import { registerSearchHandlers } from './ipc/search'
-import { registerAiHandlers } from './ipc/ai'
+import { registerAiHandlers, watchWindowForAI } from './ipc/ai'
 import { loadSettings } from './services/settings'
 
 const isDev = process.env['ELECTRON_RENDERER_URL'] !== undefined
@@ -70,6 +70,7 @@ app.whenReady().then(async () => {
 
   const win = createWindow()
   watchWindowForTerminals(win)
+  watchWindowForAI(win)
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

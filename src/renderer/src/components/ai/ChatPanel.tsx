@@ -11,7 +11,9 @@ function uid(): string {
 export function ChatPanel(): JSX.Element {
   const {
     sessions, activeSessionId, subscriptions,
-    createSession, setActiveSession, addMessage, loadSubscriptions
+    createSession, setActiveSession, addMessage,
+    updateLastMessage, setStreaming, streamingSessionId,
+    loadSubscriptions
   } = useAIStore()
 
   const [showSubs, setShowSubs] = useState(false)
@@ -19,14 +21,15 @@ export function ChatPanel(): JSX.Element {
   const [selectedSubId, setSelectedSubId] = useState<string>('')
   const [selectedModel, setSelectedModel] = useState<string>('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const cleanupRef = useRef<(() => void) | null>(null)
 
   const activeSession = sessions.find(s => s.id === activeSessionId) ?? null
+  const isStreaming = streamingSessionId !== null
 
   useEffect(() => {
     loadSubscriptions()
   }, [loadSubscriptions])
 
-  // Default selection when subscriptions load
   useEffect(() => {
     if (subscriptions.length > 0 && !selectedSubId) {
       const sub = subscriptions[0]
@@ -49,9 +52,9 @@ export function ChatPanel(): JSX.Element {
     return createSession({ provider: sub.provider, model, subscriptionId: sub.id })
   }
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     const text = input.trim()
-    if (!text) return
+    if (!text || isStreaming) return
     if (subscriptions.length === 0) { setShowSubs(true); return }
 
     let session: Session
@@ -59,6 +62,7 @@ export function ChatPanel(): JSX.Element {
 
     setInput('')
 
+    // Add user message
     addMessage(session.id, {
       id: uid(),
       role: 'user',
@@ -66,16 +70,69 @@ export function ChatPanel(): JSX.Element {
       timestamp: Date.now()
     })
 
-    // Placeholder until Phase 8 wires up actual AI
-    setTimeout(() => {
-        const providerName = PROVIDERS.find(p => p.id === session.provider)?.name ?? session.provider
-      addMessage(session.id, {
-        id: uid(),
-        role: 'assistant',
-        content: `[${providerName} · ${session.model}] AI integration coming in the next phase. Your message was: "${text}"`,
-        timestamp: Date.now()
+    // Add placeholder assistant message
+    const assistantMsgId = uid()
+    addMessage(session.id, {
+      id: assistantMsgId,
+      role: 'assistant',
+      content: '',
+      timestamp: Date.now(),
+      isStreaming: true
+    })
+
+    setStreaming(session.id)
+
+    // Build message history for API
+    const updatedSession = useAIStore.getState().sessions.find(s => s.id === session.id)!
+    const apiMessages = updatedSession.messages
+      .filter(m => m.role !== 'system' && !m.isStreaming)
+      .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }))
+
+    // Listen for chunks
+    if (cleanupRef.current) cleanupRef.current()
+    cleanupRef.current = window.api.ai.onChunk(session.id, (chunk) => {
+      if (chunk.type === 'text' && typeof chunk.content === 'string') {
+        const current = useAIStore.getState().sessions
+          .find(s => s.id === session.id)?.messages
+          .find(m => m.id === assistantMsgId)?.content ?? ''
+        updateLastMessage(session.id, { content: current + chunk.content })
+      } else if (chunk.type === 'done') {
+        updateLastMessage(session.id, { isStreaming: false })
+        setStreaming(null)
+        if (cleanupRef.current) { cleanupRef.current(); cleanupRef.current = null }
+      } else if (chunk.type === 'error') {
+        const errMsg = typeof chunk.error === 'string' ? chunk.error : 'Unknown error'
+        updateLastMessage(session.id, {
+          content: `Error: ${errMsg}`,
+          isStreaming: false
+        })
+        setStreaming(null)
+        if (cleanupRef.current) { cleanupRef.current(); cleanupRef.current = null }
+      }
+    })
+
+    // Start the chat
+    window.api.ai.chat({
+      sessionId: session.id,
+      subscriptionId: session.subscriptionId,
+      provider: session.provider,
+      model: session.model,
+      messages: apiMessages
+    }).catch(err => {
+      updateLastMessage(session.id, {
+        content: `Failed to start chat: ${err}`,
+        isStreaming: false
       })
-    }, 200)
+      setStreaming(null)
+    })
+  }
+
+  const cancelStream = () => {
+    if (activeSession && streamingSessionId) {
+      window.api.ai.cancel(streamingSessionId)
+      updateLastMessage(activeSession.id, { isStreaming: false })
+      setStreaming(null)
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -164,11 +221,14 @@ export function ChatPanel(): JSX.Element {
           </div>
         )}
         {activeSession?.messages.map(msg => (
-          <div key={msg.id} className={`chat-msg chat-msg--${msg.role}`}>
+          <div key={msg.id} className={`chat-msg chat-msg--${msg.role}${msg.isStreaming ? ' chat-msg--streaming' : ''}`}>
             <div className="chat-msg-label">
               {msg.role === 'user' ? 'You' : (activeProvider?.name ?? 'Assistant')}
+              {msg.isStreaming && <span className="chat-msg-cursor" />}
             </div>
-            <div className="chat-msg-content">{msg.content}</div>
+            <div className="chat-msg-content">
+              {msg.content || (msg.isStreaming ? <span className="chat-thinking">…</span> : '')}
+            </div>
           </div>
         ))}
         <div ref={messagesEndRef} />
@@ -183,14 +243,21 @@ export function ChatPanel(): JSX.Element {
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           rows={3}
+          disabled={isStreaming}
         />
-        <button
-          className="chat-send-btn"
-          onClick={sendMessage}
-          disabled={!input.trim()}
-        >
-          ↑
-        </button>
+        {isStreaming ? (
+          <button className="chat-stop-btn" onClick={cancelStream} title="Stop generating">
+            ■
+          </button>
+        ) : (
+          <button
+            className="chat-send-btn"
+            onClick={sendMessage}
+            disabled={!input.trim()}
+          >
+            ↑
+          </button>
+        )}
       </div>
 
       {showSubs && <SubscriptionModal onClose={() => setShowSubs(false)} />}

@@ -31,7 +31,26 @@ const api = {
     addSubscription: (sub: import('../shared/types').Subscription): Promise<void> =>
       ipcRenderer.invoke('ai:addSubscription', sub),
     removeSubscription: (id: string): Promise<void> =>
-      ipcRenderer.invoke('ai:removeSubscription', id)
+      ipcRenderer.invoke('ai:removeSubscription', id),
+    chat: (opts: {
+      sessionId: string
+      subscriptionId: string
+      provider: string
+      model: string
+      messages: Array<{ role: 'user' | 'assistant'; content: string }>
+      systemPrompt?: string
+    }): Promise<void> => ipcRenderer.invoke('ai:chat', opts),
+    cancel: (sessionId: string): void => ipcRenderer.send('ai:cancel', sessionId),
+    onChunk: (
+      sessionId: string,
+      cb: (chunk: Record<string, unknown>) => void
+    ): (() => void) => {
+      const channel = `ai:chunk:${sessionId}`
+      const handler = (_: Electron.IpcRendererEvent, chunk: Record<string, unknown>): void =>
+        cb(chunk)
+      ipcRenderer.on(channel, handler)
+      return () => ipcRenderer.removeListener(channel, handler)
+    }
   },
   search: {
     files: (rootDir: string): Promise<string[]> => ipcRenderer.invoke('search:files', rootDir),
