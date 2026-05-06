@@ -15,7 +15,7 @@ export function FileTabs(): JSX.Element {
           onClick={() => setActiveFile(file.id)}
         >
           <span className="file-tab-name">{file.name}</span>
-          {file.isDirty && <span className="file-tab-dirty" title="Unsaved changes">·</span>}
+          {file.isDirty && <span className="file-tab-dirty" title="Unsaved changes" />}
           <button
             className="file-tab-close"
             onClick={e => {

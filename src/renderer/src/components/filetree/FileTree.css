@@ -62,3 +62,13 @@
 .file-tree-dir {
   color: #cccccc;
 }
+
+.file-tree-file-icon {
+  font-size: 9px;
+  font-weight: 700;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  min-width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+  letter-spacing: -0.02em;
+}

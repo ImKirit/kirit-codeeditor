@@ -6,13 +6,14 @@
   background: #1e1e1e;
   color: #cccccc;
   overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 }
 
 /* ── Title bar ─────────────────────────────────────────── */
 .kode-titlebar {
   height: 34px;
   background: #181818;
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid #1a1a1a;
   display: flex;
   align-items: center;
   flex-shrink: 0;
@@ -26,9 +27,9 @@
   left: 50%;
   transform: translateX(-50%);
   font-size: 11px;
-  font-weight: 600;
-  color: #454545;
-  letter-spacing: 0.2em;
+  font-weight: 400;
+  color: #333333;
+  letter-spacing: 0.25em;
   text-transform: uppercase;
   pointer-events: none;
   white-space: nowrap;
@@ -40,31 +41,33 @@
   background: #0e639c;
   display: flex;
   align-items: center;
-  padding: 0 8px;
+  padding: 0;
   gap: 0;
   flex-shrink: 0;
   user-select: none;
+  overflow: hidden;
 }
 
 .kode-statusbar-item {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.88);
   white-space: nowrap;
-  padding: 0 6px;
+  padding: 0 8px;
   height: 100%;
   display: flex;
   align-items: center;
   cursor: default;
   transition: background 0.1s;
+  gap: 3px;
 }
 
 .kode-statusbar-item:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .kode-statusbar-branch {
-  background: rgba(255, 255, 255, 0.08);
-  margin-right: 4px;
+  background: rgba(0, 0, 0, 0.15);
+  gap: 4px;
 }
 
 .kode-statusbar-spacer {

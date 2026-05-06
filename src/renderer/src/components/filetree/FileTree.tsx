@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import type { FileEntry } from '../../../../shared/types'
 import { useEditorStore } from '../../store/editor'
-import { getLanguage, getDisplayName } from '../../lib/language'
+import { getLanguage, getDisplayName, getFileIcon } from '../../lib/language'
 import './FileTree.css'
 
 interface FileTreeProps {
@@ -81,7 +81,7 @@ function DirectoryRow({
         onClick={toggle}
       >
         <span className="file-tree-chevron">{open ? '▾' : '▸'}</span>
-        <span className="file-tree-icon file-tree-icon-dir">{open ? '□' : '▪'}</span>
+        <span className="file-tree-icon file-tree-icon-dir">{open ? '📂' : '📁'}</span>
         <span className="file-tree-name">{entry.name}</span>
       </div>
       {open && (
@@ -115,12 +115,15 @@ function FileRow({ entry, depth }: { entry: FileEntry; depth: number }): JSX.Ele
     }
   }, [entry, openFiles, openFile, setActiveFile])
 
+  const icon = getFileIcon(entry.name)
+
   return (
     <div
       className={`file-tree-row file-tree-file${isOpen ? ' file-tree-file--open' : ''}`}
       style={{ paddingLeft: 8 + depth * 12 + 14 }}
       onClick={handleClick}
     >
+      <span className="file-tree-file-icon" style={{ color: icon.color }}>{icon.char}</span>
       <span className="file-tree-name">{entry.name}</span>
     </div>
   )

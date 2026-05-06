@@ -62,3 +62,41 @@ export function getLanguage(filename: string): string {
 export function getDisplayName(path: string): string {
   return path.split(/[/\\]/).pop() ?? path
 }
+
+interface FileIcon {
+  char: string
+  color: string
+}
+
+const ICON_MAP: Record<string, FileIcon> = {
+  typescript:  { char: 'TS', color: '#3178c6' },
+  javascript:  { char: 'JS', color: '#f7df1e' },
+  json:        { char: '{}', color: '#cbcb41' },
+  html:        { char: '◈',  color: '#e34c26' },
+  css:         { char: '◈',  color: '#264de4' },
+  scss:        { char: '◈',  color: '#cc6699' },
+  less:        { char: '◈',  color: '#1d365d' },
+  markdown:    { char: 'MD', color: '#519aba' },
+  python:      { char: 'PY', color: '#3572a5' },
+  rust:        { char: 'RS', color: '#dea584' },
+  go:          { char: 'GO', color: '#00add8' },
+  java:        { char: 'JV', color: '#b07219' },
+  c:           { char: 'C',  color: '#555555' },
+  cpp:         { char: 'C+', color: '#f34b7d' },
+  csharp:      { char: 'C#', color: '#178600' },
+  php:         { char: 'PH', color: '#4f5d95' },
+  ruby:        { char: 'RB', color: '#701516' },
+  shell:       { char: '$',  color: '#89e051' },
+  powershell:  { char: 'PS', color: '#012456' },
+  yaml:        { char: '≡',  color: '#cb171e' },
+  xml:         { char: '</>', color: '#e34c26' },
+  sql:         { char: 'DB', color: '#e38c00' },
+  graphql:     { char: 'GQ', color: '#e10098' },
+  dockerfile:  { char: '🐳', color: '#384d54' },
+  plaintext:   { char: '·',  color: '#6e6e6e' }
+}
+
+export function getFileIcon(filename: string): FileIcon {
+  const lang = getLanguage(filename)
+  return ICON_MAP[lang] ?? { char: '·', color: '#6e6e6e' }
+}

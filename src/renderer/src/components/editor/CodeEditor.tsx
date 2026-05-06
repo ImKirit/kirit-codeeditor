@@ -172,7 +172,10 @@ function EditorWelcome(): JSX.Element {
 
   const handleOpenFolder = async () => {
     const path = await window.api.fs.openFolder()
-    if (path) useEditorStore.getState().setOpenFolder(path)
+    if (path) {
+      useEditorStore.getState().setOpenFolder(path)
+      window.api.fs.addRecentFolder(path)
+    }
   }
 
   const handleOpenFile = async () => {
@@ -189,20 +192,42 @@ function EditorWelcome(): JSX.Element {
 
   return (
     <div className="editor-welcome">
-      <div className="editor-welcome-logo">Kode</div>
-      <div className="editor-welcome-sub">
-        {openFolder ? 'Select a file from the explorer' : 'Open a folder or file to begin'}
+      <div className="editor-welcome-header">
+        <div className="editor-welcome-logo">Kode</div>
+        <div className="editor-welcome-version">v0.1.0 · AI-Native Code Editor</div>
       </div>
-      {!openFolder && (
-        <div className="editor-welcome-actions">
+
+      <div className="editor-welcome-grid">
+        <div className="editor-welcome-section">
+          <div className="editor-welcome-section-title">Start</div>
           <button className="editor-welcome-btn" onClick={handleOpenFolder}>
-            Open Folder <span className="editor-welcome-kbd">Ctrl+K Ctrl+O</span>
+            Open Folder <span className="editor-welcome-kbd">Ctrl+K O</span>
           </button>
           <button className="editor-welcome-btn" onClick={handleOpenFile}>
             Open File <span className="editor-welcome-kbd">Ctrl+O</span>
           </button>
         </div>
-      )}
+
+        <div className="editor-welcome-section">
+          <div className="editor-welcome-section-title">Quick Access</div>
+          <div className="editor-welcome-tip">
+            <span>Command Palette</span>
+            <span className="editor-welcome-tip-key">Ctrl+Shift+P</span>
+          </div>
+          <div className="editor-welcome-tip">
+            <span>Go to File</span>
+            <span className="editor-welcome-tip-key">Ctrl+P</span>
+          </div>
+          <div className="editor-welcome-tip">
+            <span>Find in Files</span>
+            <span className="editor-welcome-tip-key">Ctrl+Shift+F</span>
+          </div>
+          <div className="editor-welcome-tip">
+            <span>Settings</span>
+            <span className="editor-welcome-tip-key">Ctrl+,</span>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
