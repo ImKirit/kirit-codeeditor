@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useAIStore } from '../../store/ai'
 import { useEditorStore } from '../../store/editor'
+import { useSchedulerStore } from '../../store/scheduler'
 import { PROVIDERS, type Session, type Subscription } from '../../../../shared/types'
 import { getLanguage } from '../../lib/language'
 import { SubscriptionModal } from './SubscriptionModal'
+import { SchedulerPopup } from '../scheduler/SchedulerPopup'
 import './ChatPanel.css'
 
 function uid(): string {
@@ -54,7 +56,11 @@ export function ChatPanel(): JSX.Element {
 
   const { openFiles, openFolder, openFile, jumpToLine } = useEditorStore()
 
+  const { messages: scheduledMessages } = useSchedulerStore()
+  const pendingScheduled = scheduledMessages.filter(m => m.sessionId === (activeSessionId ?? '') && !m.fired)
+
   const [showSubs, setShowSubs] = useState(false)
+  const [showScheduler, setShowScheduler] = useState(false)
   const [input, setInput] = useState('')
   const [selectedSubId, setSelectedSubId] = useState<string>('')
   const [selectedModel, setSelectedModel] = useState<string>('')
@@ -92,6 +98,27 @@ export function ChatPanel(): JSX.Element {
       titleInputRef.current.select()
     }
   }, [editingTitle])
+
+  // Listen for scheduled messages firing
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { sessionId, prompt } = (e as CustomEvent<{ sessionId: string; prompt: string }>).detail
+      if (sessionId !== activeSessionId) return
+      setInput(prompt)
+      // Small delay so the input is set before sending
+      setTimeout(() => {
+        const state = useAIStore.getState()
+        if (state.streamingSessionId) return // don't send if streaming
+        const inputEl = document.querySelector('.chat-input') as HTMLTextAreaElement | null
+        if (inputEl) {
+          inputEl.value = prompt
+          inputEl.dispatchEvent(new Event('input', { bubbles: true }))
+        }
+      }, 100)
+    }
+    window.addEventListener('kode:scheduledMessage', handler)
+    return () => window.removeEventListener('kode:scheduledMessage', handler)
+  }, [activeSessionId])
 
   const resolveFilePath = useCallback((filePath: string): string => {
     if (/^[a-zA-Z]:[\\/]/.test(filePath) || filePath.startsWith('/')) return filePath
@@ -265,6 +292,15 @@ export function ChatPanel(): JSX.Element {
             onClick={() => setAutoFollow(v => !v)}
             title={autoFollow ? 'Auto-follow: on' : 'Auto-follow: off'}
           >↕</button>
+          {activeSession && (
+            <button
+              className={`chat-header-btn${pendingScheduled.length > 0 ? ' chat-sched-active' : ''}`}
+              onClick={() => setShowScheduler(v => !v)}
+              title={pendingScheduled.length > 0 ? `${pendingScheduled.length} scheduled` : 'Schedule message'}
+            >
+              ⧗{pendingScheduled.length > 0 ? ` ${pendingScheduled.length}` : ''}
+            </button>
+          )}
           <button className="chat-header-btn" onClick={handleNewSession} title="New chat">+</button>
           <button className="chat-header-btn" onClick={() => setShowSubs(true)} title="Manage subscriptions">⚙</button>
         </div>
@@ -413,6 +449,12 @@ export function ChatPanel(): JSX.Element {
       </div>
 
       {showSubs && <SubscriptionModal onClose={() => setShowSubs(false)} />}
+      {showScheduler && activeSession && (
+        <SchedulerPopup
+          sessionId={activeSession.id}
+          onClose={() => setShowScheduler(false)}
+        />
+      )}
     </div>
   )
 }

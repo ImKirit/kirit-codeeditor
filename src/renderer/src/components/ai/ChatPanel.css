@@ -80,6 +80,8 @@
 .chat-follow-btn:hover { color: #cccccc; background: #3a3a3a; }
 .chat-follow-btn.active { color: #4fc3f7; }
 
+.chat-sched-active { color: #ffb74d !important; }
+
 /* ── Writing indicator ──────────────────────────────────── */
 .chat-writing-bar {
   display: flex;
