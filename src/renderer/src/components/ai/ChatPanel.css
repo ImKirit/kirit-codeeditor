@@ -46,6 +46,13 @@
   align-self: center;
 }
 
+.chat-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
 .chat-header-btn {
   background: none;
   border: none;
@@ -58,6 +65,47 @@
 }
 
 .chat-header-btn:hover { color: #cccccc; background: #3a3a3a; }
+
+.chat-follow-btn {
+  background: none;
+  border: none;
+  color: #6e6e6e;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 3px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.chat-follow-btn:hover { color: #cccccc; background: #3a3a3a; }
+.chat-follow-btn.active { color: #4fc3f7; }
+
+/* ── Writing indicator ──────────────────────────────────── */
+.chat-writing-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: rgba(79, 195, 247, 0.08);
+  border-bottom: 1px solid rgba(79, 195, 247, 0.15);
+  font-size: 11px;
+  color: #4fc3f7;
+  flex-shrink: 0;
+}
+
+.chat-writing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4fc3f7;
+  flex-shrink: 0;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
 
 /* ── Session tabs ───────────────────────────────────────── */
 .chat-session-tabs {

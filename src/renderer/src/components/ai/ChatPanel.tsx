@@ -1,11 +1,44 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useAIStore } from '../../store/ai'
+import { useEditorStore } from '../../store/editor'
 import { PROVIDERS, type Session, type Subscription } from '../../../../shared/types'
+import { getLanguage } from '../../lib/language'
 import { SubscriptionModal } from './SubscriptionModal'
 import './ChatPanel.css'
 
 function uid(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2)
+}
+
+const PLAYBACK_CHUNK = 80 // chars per frame at ~60fps
+
+function playbackWrite(
+  fileId: string,
+  content: string,
+  autoFollow: boolean,
+  onDone: () => void
+): () => void {
+  let offset = 0
+  let animId: ReturnType<typeof setTimeout>
+
+  const step = () => {
+    offset = Math.min(offset + PLAYBACK_CHUNK, content.length)
+    useEditorStore.getState().updateContent(fileId, content.slice(0, offset))
+
+    if (autoFollow) {
+      const line = content.slice(0, offset).split('\n').length
+      window.dispatchEvent(new CustomEvent('kode:revealLine', { detail: { line } }))
+    }
+
+    if (offset < content.length) {
+      animId = setTimeout(step, 16)
+    } else {
+      onDone()
+    }
+  }
+
+  animId = setTimeout(step, 16)
+  return () => clearTimeout(animId)
 }
 
 export function ChatPanel(): JSX.Element {
@@ -16,12 +49,17 @@ export function ChatPanel(): JSX.Element {
     loadSubscriptions
   } = useAIStore()
 
+  const { openFiles, openFolder, openFile } = useEditorStore()
+
   const [showSubs, setShowSubs] = useState(false)
   const [input, setInput] = useState('')
   const [selectedSubId, setSelectedSubId] = useState<string>('')
   const [selectedModel, setSelectedModel] = useState<string>('')
+  const [autoFollow, setAutoFollow] = useState(true)
+  const [writingFile, setWritingFile] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const cleanupRef = useRef<(() => void) | null>(null)
+  const playbackCleanupRef = useRef<(() => void) | null>(null)
 
   const activeSession = sessions.find(s => s.id === activeSessionId) ?? null
   const isStreaming = streamingSessionId !== null
@@ -43,6 +81,48 @@ export function ChatPanel(): JSX.Element {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [activeSession?.messages.length])
 
+  const resolveFilePath = useCallback((filePath: string): string => {
+    if (/^[a-zA-Z]:[\\/]/.test(filePath) || filePath.startsWith('/')) return filePath
+    if (openFolder) return openFolder + '\\' + filePath.replace(/\//g, '\\')
+    return filePath
+  }, [openFolder])
+
+  const handleWriteFile = useCallback(async (rawPath: string, content: string) => {
+    const absPath = resolveFilePath(rawPath)
+    const name = absPath.split(/[/\\]/).pop() ?? absPath
+    const language = getLanguage(name)
+
+    // Write to disk
+    try {
+      await window.api.fs.writeFile(absPath, content)
+    } catch (e) {
+      console.error('Failed to write file:', e)
+    }
+
+    // Open in editor if not already open
+    const existing = openFiles.find(f => f.id === absPath)
+    if (!existing) {
+      openFile({ id: absPath, path: absPath, name, content: '', language })
+    }
+
+    setWritingFile(name)
+
+    // Cancel any in-progress playback
+    playbackCleanupRef.current?.()
+
+    playbackCleanupRef.current = playbackWrite(
+      absPath,
+      content,
+      autoFollow,
+      () => {
+        setWritingFile(null)
+        playbackCleanupRef.current = null
+        // Mark as saved since it's been written to disk
+        useEditorStore.getState().markSaved(absPath)
+      }
+    )
+  }, [openFiles, openFile, resolveFilePath, autoFollow])
+
   const getOrCreateSession = (): Session => {
     if (activeSession) return activeSession
     const sub = subscriptions.find(s => s.id === selectedSubId) ?? subscriptions[0]
@@ -62,7 +142,6 @@ export function ChatPanel(): JSX.Element {
 
     setInput('')
 
-    // Add user message
     addMessage(session.id, {
       id: uid(),
       role: 'user',
@@ -70,7 +149,6 @@ export function ChatPanel(): JSX.Element {
       timestamp: Date.now()
     })
 
-    // Add placeholder assistant message
     const assistantMsgId = uid()
     addMessage(session.id, {
       id: assistantMsgId,
@@ -82,13 +160,11 @@ export function ChatPanel(): JSX.Element {
 
     setStreaming(session.id)
 
-    // Build message history for API
     const updatedSession = useAIStore.getState().sessions.find(s => s.id === session.id)!
     const apiMessages = updatedSession.messages
       .filter(m => m.role !== 'system' && !m.isStreaming)
       .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }))
 
-    // Listen for chunks
     if (cleanupRef.current) cleanupRef.current()
     cleanupRef.current = window.api.ai.onChunk(session.id, (chunk) => {
       if (chunk.type === 'text' && typeof chunk.content === 'string') {
@@ -96,6 +172,18 @@ export function ChatPanel(): JSX.Element {
           .find(s => s.id === session.id)?.messages
           .find(m => m.id === assistantMsgId)?.content ?? ''
         updateLastMessage(session.id, { content: current + chunk.content })
+      } else if (chunk.type === 'write_file') {
+        const path = chunk.path as string
+        const content = chunk.content as string
+        handleWriteFile(path, content)
+        // Add a note in the chat about the file write
+        const current = useAIStore.getState().sessions
+          .find(s => s.id === session.id)?.messages
+          .find(m => m.id === assistantMsgId)?.content ?? ''
+        const note = `\n\n📝 Writing \`${path}\`…`
+        if (!current.includes(note.trim())) {
+          updateLastMessage(session.id, { content: current + note })
+        }
       } else if (chunk.type === 'done') {
         updateLastMessage(session.id, { isStreaming: false })
         setStreaming(null)
@@ -111,7 +199,6 @@ export function ChatPanel(): JSX.Element {
       }
     })
 
-    // Start the chat
     window.api.ai.chat({
       sessionId: session.id,
       subscriptionId: session.subscriptionId,
@@ -133,6 +220,9 @@ export function ChatPanel(): JSX.Element {
       updateLastMessage(activeSession.id, { isStreaming: false })
       setStreaming(null)
     }
+    playbackCleanupRef.current?.()
+    playbackCleanupRef.current = null
+    setWritingFile(null)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -182,10 +272,27 @@ export function ChatPanel(): JSX.Element {
             <span className="chat-no-sub">No subscription</span>
           )}
         </div>
-        <button className="chat-header-btn" onClick={() => setShowSubs(true)} title="Manage subscriptions">
-          ⚙
-        </button>
+        <div className="chat-header-actions">
+          <button
+            className={`chat-follow-btn${autoFollow ? ' active' : ''}`}
+            onClick={() => setAutoFollow(v => !v)}
+            title={autoFollow ? 'Auto-follow: on' : 'Auto-follow: off'}
+          >
+            ↕
+          </button>
+          <button className="chat-header-btn" onClick={() => setShowSubs(true)} title="Manage subscriptions">
+            ⚙
+          </button>
+        </div>
       </div>
+
+      {/* Writing indicator */}
+      {writingFile && (
+        <div className="chat-writing-bar">
+          <span className="chat-writing-dot" />
+          Writing {writingFile}…
+        </div>
+      )}
 
       {/* Session tabs */}
       {sessions.length > 1 && (

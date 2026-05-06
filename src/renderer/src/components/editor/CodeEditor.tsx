@@ -122,6 +122,18 @@ export function CodeEditor(): JSX.Element {
     }
   }, [targetLine, clearTargetLine])
 
+  // Auto-follow: listen for direct reveal events during AI writing
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const line = (e as CustomEvent<{ line: number }>).detail?.line
+      if (line && editorRef.current) {
+        editorRef.current.revealLine(line, 1 /* Immediate */)
+      }
+    }
+    window.addEventListener('kode:revealLine', handler)
+    return () => window.removeEventListener('kode:revealLine', handler)
+  }, [])
+
   return (
     <div className="code-editor-wrap">
       <FileTabs />
