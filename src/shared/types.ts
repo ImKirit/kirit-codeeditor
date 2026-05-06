@@ -93,5 +93,15 @@ export const PROVIDERS: ProviderInfo[] = [
       { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', contextLength: 1048576 },
       { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', contextLength: 1048576 }
     ]
+  },
+  {
+    id: 'copilot',
+    name: 'GitHub Copilot',
+    models: [
+      { id: 'gpt-4o', name: 'GPT-4o (Copilot)', contextLength: 128000 },
+      { id: 'gpt-4o-mini', name: 'GPT-4o mini (Copilot)', contextLength: 128000 },
+      { id: 'claude-3.5-sonnet', name: 'Claude 3.5 Sonnet (Copilot)', contextLength: 200000 },
+      { id: 'o1-mini', name: 'o1-mini (Copilot)', contextLength: 128000 }
+    ]
   }
 ]

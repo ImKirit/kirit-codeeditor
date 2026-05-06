@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import type { IDockviewPanelProps } from 'dockview'
 import { TerminalInstance } from '../../terminal/TerminalInstance'
 import './TerminalPanel.css'
@@ -32,6 +32,12 @@ export function TerminalPanel(_props: IDockviewPanelProps): JSX.Element {
     setTabs((prev) => [...prev, { id, label, exited: false }])
     setActiveId(id)
   }, [])
+
+  // Listen for "New Terminal" events from the menu bar
+  useEffect(() => {
+    window.addEventListener('kode:newTerminal', addTab)
+    return () => window.removeEventListener('kode:newTerminal', addTab)
+  }, [addTab])
 
   const closeTab = useCallback(
     (id: string, e: React.MouseEvent) => {

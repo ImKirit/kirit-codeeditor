@@ -6,6 +6,7 @@ import { KodeLayout } from './components/layout/KodeLayout'
 import { CommandPalette } from './components/commandpalette/CommandPalette'
 import { QuickOpen } from './components/search/QuickOpen'
 import { GlobalSearch } from './components/search/GlobalSearch'
+import { MenuBar } from './components/menubar/MenuBar'
 import { getLanguage } from './lib/language'
 import './App.css'
 
@@ -20,7 +21,7 @@ export default function App(): JSX.Element {
     registerCommand({
       id: 'kode.openFolder',
       label: 'File: Open Folder',
-      keybinding: 'Ctrl+K Ctrl+O',
+      keybinding: 'Ctrl+K O',
       action: async () => {
         const path = await window.api.fs.openFolder()
         if (path) {
@@ -113,6 +114,7 @@ export default function App(): JSX.Element {
 function TitleBar(): JSX.Element {
   return (
     <div className="kode-titlebar">
+      <MenuBar />
       <span className="kode-titlebar-title">Kode</span>
     </div>
   )

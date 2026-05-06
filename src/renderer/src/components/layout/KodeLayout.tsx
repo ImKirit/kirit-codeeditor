@@ -5,6 +5,8 @@ import { FileTreePanel } from './panels/FileTreePanel'
 import { EditorPanel } from './panels/EditorPanel'
 import { AIChatPanel } from './panels/AIChatPanel'
 import { TerminalPanel } from './panels/TerminalPanel'
+import { setLayoutApi } from '../../lib/layoutApi'
+import { useLayoutStore } from '../../store/layout'
 import './KodeLayout.css'
 
 const LAYOUT_KEY = 'kode-layout-v1'
@@ -16,89 +18,119 @@ const COMPONENTS: Record<string, React.FunctionComponent<IDockviewPanelProps>> =
   terminal: TerminalPanel
 }
 
+// Custom tab component for the editor — no close button
+function EditorTab(props: IDockviewPanelProps): JSX.Element {
+  return (
+    <div className="kode-tab-locked">
+      <span>{props.api.title}</span>
+    </div>
+  )
+}
+
+const TAB_COMPONENTS: Record<string, React.FunctionComponent<IDockviewPanelProps>> = {
+  lockedTab: EditorTab
+}
+
 export function KodeLayout(): JSX.Element {
-  const onReady = useCallback((event: DockviewReadyEvent) => {
-    const { api } = event
+  const { setExplorerOpen, setTerminalOpen, setAiChatOpen } = useLayoutStore()
 
-    // Persist layout on every change
-    api.onDidLayoutChange(() => {
+  const onReady = useCallback(
+    (event: DockviewReadyEvent) => {
+      const { api } = event
+      setLayoutApi(api)
+
+      // Track panel close events
+      api.onDidRemovePanel(panel => {
+        if (panel.id === 'fileTree') setExplorerOpen(false)
+        else if (panel.id === 'terminal') setTerminalOpen(false)
+        else if (panel.id === 'aiChat') setAiChatOpen(false)
+        else if (panel.id === 'editor') {
+          // Editor must never be permanently removed — re-add immediately
+          setTimeout(() => {
+            api.addPanel({
+              id: 'editor',
+              component: 'editor',
+              tabComponent: 'lockedTab',
+              title: 'Editor'
+            } as never)
+          }, 0)
+        }
+      })
+
+      api.onDidAddPanel(panel => {
+        if (panel.id === 'fileTree') setExplorerOpen(true)
+        else if (panel.id === 'terminal') setTerminalOpen(true)
+        else if (panel.id === 'aiChat') setAiChatOpen(true)
+      })
+
+      // Persist layout on every change
+      api.onDidLayoutChange(() => {
+        try {
+          localStorage.setItem(LAYOUT_KEY, JSON.stringify(api.toJSON()))
+        } catch {
+          // storage quota exceeded — non-fatal
+        }
+      })
+
+      // Restore saved layout
+      const saved = localStorage.getItem(LAYOUT_KEY)
+      if (saved) {
+        try {
+          api.fromJSON(JSON.parse(saved))
+          return
+        } catch {
+          localStorage.removeItem(LAYOUT_KEY)
+        }
+      }
+
+      // Default layout
+      api.addPanel({
+        id: 'editor',
+        component: 'editor',
+        tabComponent: 'lockedTab',
+        title: 'Editor'
+      } as never)
+
+      api.addPanel({
+        id: 'fileTree',
+        component: 'fileTree',
+        title: 'Explorer',
+        position: { direction: 'left', referencePanel: 'editor' },
+        floating: false
+      } as never)
+
+      api.addPanel({
+        id: 'aiChat',
+        component: 'aiChat',
+        title: 'AI',
+        position: { direction: 'right', referencePanel: 'editor' },
+        floating: false
+      } as never)
+
+      api.addPanel({
+        id: 'terminal',
+        component: 'terminal',
+        title: 'Terminal',
+        position: { direction: 'below', referencePanel: 'editor' },
+        floating: false
+      } as never)
+
       try {
-        localStorage.setItem(LAYOUT_KEY, JSON.stringify(api.toJSON()))
+        api.getPanel('fileTree')?.group.api.setSize({ width: 240 })
+        api.getPanel('aiChat')?.group.api.setSize({ width: 340 })
+        api.getPanel('terminal')?.group.api.setSize({ height: 220 })
       } catch {
-        // storage quota exceeded — non-fatal
+        // best-effort sizing
       }
-    })
-
-    // Restore saved layout
-    const saved = localStorage.getItem(LAYOUT_KEY)
-    if (saved) {
-      try {
-        api.fromJSON(JSON.parse(saved))
-        return
-      } catch {
-        localStorage.removeItem(LAYOUT_KEY)
-      }
-    }
-
-    // Default layout: editor fills space, then we add panels around it
-    api.addPanel({
-      id: 'editor',
-      component: 'editor',
-      title: 'Editor'
-    } as any)
-
-    api.addPanel({
-      id: 'fileTree',
-      component: 'fileTree',
-      title: 'Explorer',
-      position: { direction: 'left', referencePanel: 'editor' },
-      floating: false
-    } as any)
-
-    api.addPanel({
-      id: 'aiChat',
-      component: 'aiChat',
-      title: 'AI',
-      position: { direction: 'right', referencePanel: 'editor' },
-      floating: false
-    } as any)
-
-    api.addPanel({
-      id: 'terminal',
-      component: 'terminal',
-      title: 'Terminal',
-      position: { direction: 'below', referencePanel: 'editor' },
-      floating: false
-    } as any)
-
-    // Size the panels after adding them — dockview exposes panel group sizing
-    // via the group's view. We resize groups by accessing their layout.
-    // The built-in drag handles handle all subsequent resizing.
-    try {
-      const groups = api.groups
-      // fileTree group — constrain to ~240px width
-      const fileTreePanel = api.getPanel('fileTree')
-      if (fileTreePanel) {
-        fileTreePanel.group.api.setSize({ width: 240 })
-      }
-      const aiChatPanel = api.getPanel('aiChat')
-      if (aiChatPanel) {
-        aiChatPanel.group.api.setSize({ width: 340 })
-      }
-      const terminalPanel = api.getPanel('terminal')
-      if (terminalPanel) {
-        terminalPanel.group.api.setSize({ height: 220 })
-      }
-      void groups // avoid lint warning
-    } catch {
-      // sizing is best-effort — layout still works without it
-    }
-  }, [])
+    },
+    [setExplorerOpen, setTerminalOpen, setAiChatOpen]
+  )
 
   return (
     <DockviewReact
       className="dockview-theme-dark kode-dockview"
       components={COMPONENTS}
+      tabComponents={TAB_COMPONENTS}
       onReady={onReady}
     />
   )

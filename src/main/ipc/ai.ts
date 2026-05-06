@@ -70,6 +70,35 @@ async function runOpenAI(opts: ChatOpts, sender: WebContents, apiKey: string, ct
   send(sender, sessionId, { type: 'done' })
 }
 
+async function runCopilot(opts: ChatOpts, sender: WebContents, apiKey: string, ctrl: AbortController): Promise<void> {
+  const { sessionId, model, messages, systemPrompt } = opts
+  const client = new OpenAI({
+    baseURL: 'https://api.githubcopilot.com',
+    apiKey,
+    defaultHeaders: {
+      'Copilot-Integration-Id': 'vscode-chat',
+      'Editor-Version': 'vscode/1.95.3'
+    }
+  })
+  const stream = await client.chat.completions.create(
+    {
+      model,
+      stream: true,
+      messages: [
+        { role: 'system', content: systemPrompt ?? DEFAULT_SYSTEM },
+        ...messages
+      ]
+    },
+    { signal: ctrl.signal }
+  )
+  for await (const chunk of stream) {
+    if (ctrl.signal.aborted) break
+    const text = chunk.choices[0]?.delta?.content
+    if (text) send(sender, sessionId, { type: 'text', content: text })
+  }
+  send(sender, sessionId, { type: 'done' })
+}
+
 async function runGemini(opts: ChatOpts, sender: WebContents, apiKey: string, ctrl: AbortController): Promise<void> {
   const { sessionId, model, messages, systemPrompt } = opts
   const ai = new GoogleGenAI({ apiKey })
@@ -118,6 +147,8 @@ export function registerAiHandlers(): void {
         await runOpenAI(opts, sender, apiKey, ctrl)
       } else if (provider === 'gemini') {
         await runGemini(opts, sender, apiKey, ctrl)
+      } else if (provider === 'copilot') {
+        await runCopilot(opts, sender, apiKey, ctrl)
       } else {
         send(sender, sessionId, { type: 'error', error: `Provider "${provider}" not yet implemented.` })
       }

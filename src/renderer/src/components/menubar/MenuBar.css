@@ -1,0 +1,100 @@
+.menubar {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+}
+
+.menubar-menu {
+  position: relative;
+}
+
+.menubar-label {
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  padding: 0 8px;
+  height: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  user-select: none;
+  border-radius: 3px;
+  transition: background 0.1s;
+}
+
+.menubar-label:hover,
+.menubar-menu.open .menubar-label {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* Dropdown */
+.menubar-dropdown {
+  position: fixed;
+  z-index: 2000;
+  min-width: 220px;
+  background: #252526;
+  border: 1px solid #454545;
+  border-radius: 4px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  padding: 4px 0;
+  margin-top: 0;
+}
+
+.menubar-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 5px 14px;
+  background: none;
+  border: none;
+  color: #cccccc;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  user-select: none;
+  gap: 16px;
+  white-space: nowrap;
+}
+
+.menubar-item:hover {
+  background: #04395e;
+  color: #fff;
+}
+
+.menubar-item.disabled {
+  color: #555;
+  cursor: default;
+  pointer-events: none;
+}
+
+.menubar-item-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.menubar-item-check {
+  width: 14px;
+  display: inline-block;
+  color: #0e639c;
+  font-size: 11px;
+}
+
+.menubar-item-shortcut {
+  color: #6e6e6e;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.menubar-separator {
+  height: 1px;
+  background: #3a3a3a;
+  margin: 4px 0;
+}
