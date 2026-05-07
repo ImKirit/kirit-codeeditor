@@ -21,8 +21,8 @@ interface ChatOpts {
 
 const activeStreams = new Map<string, AbortController>()
 
-function getKey(subscriptionId: string): string | null {
-  return getSubscriptions().find(s => s.id === subscriptionId)?.apiKey ?? null
+function getSub(subscriptionId: string) {
+  return getSubscriptions().find(s => s.id === subscriptionId) ?? null
 }
 
 function send(sender: WebContents, sessionId: string, chunk: Record<string, unknown>): void {
@@ -196,6 +196,128 @@ async function runGemini(opts: ChatOpts, sender: WebContents, apiKey: string, ct
   send(sender, sessionId, { type: 'done' })
 }
 
+async function runClaudeAccount(opts: ChatOpts, sender: WebContents, cookieStr: string, ctrl: AbortController): Promise<void> {
+  const { sessionId, messages, model } = opts
+
+  const headers: Record<string, string> = {
+    'Cookie': cookieStr,
+    'Content-Type': 'application/json',
+    'Accept': 'text/event-stream,application/json',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    'Referer': 'https://claude.ai/',
+    'Origin': 'https://claude.ai'
+  }
+
+  // Get organization ID from session
+  const sessionRes = await fetch('https://claude.ai/api/auth/session', { headers })
+  if (!sessionRes.ok) {
+    send(sender, sessionId, { type: 'error', error: 'Session expired — please reconnect your Claude account.' })
+    return
+  }
+  const sessionData = await sessionRes.json() as { account?: { memberships?: Array<{ organization?: { uuid: string } }> } }
+  const orgId = sessionData.account?.memberships?.[0]?.organization?.uuid
+  if (!orgId) {
+    send(sender, sessionId, { type: 'error', error: 'Could not retrieve organization ID from Claude session.' })
+    return
+  }
+
+  // Create a new conversation
+  const convId = crypto.randomUUID()
+  const convRes = await fetch(`https://claude.ai/api/organizations/${orgId}/chat_conversations`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ uuid: convId, name: '' })
+  })
+  if (!convRes.ok) {
+    send(sender, sessionId, { type: 'error', error: 'Failed to create Claude conversation.' })
+    return
+  }
+
+  // Map prior messages as tree (claude.ai uses a different format)
+  // For simplicity: replay all prior messages, only stream the last user turn
+  const prior = messages.slice(0, -1)
+  const lastUserMsg = messages.at(-1)?.content ?? ''
+
+  // If there are prior messages, upload them first (best effort)
+  if (prior.length > 0) {
+    for (const msg of prior) {
+      await fetch(`https://claude.ai/api/organizations/${orgId}/chat_conversations/${convId}/completion`, {
+        method: 'POST',
+        headers: { ...headers, Accept: 'application/json' },
+        body: JSON.stringify({
+          prompt: msg.content,
+          model,
+          timezone: 'UTC',
+          attachments: [],
+          files: []
+        })
+      }).catch(() => {})
+    }
+  }
+
+  // Stream the actual response
+  const completionRes = await fetch(
+    `https://claude.ai/api/organizations/${orgId}/chat_conversations/${convId}/completion`,
+    {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        prompt: lastUserMsg,
+        model,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        attachments: [],
+        files: []
+      }),
+      signal: ctrl.signal
+    }
+  )
+
+  if (!completionRes.ok) {
+    const errText = await completionRes.text().catch(() => completionRes.status.toString())
+    send(sender, sessionId, { type: 'error', error: `Claude account API error: ${errText}` })
+    return
+  }
+
+  const reader = completionRes.body?.getReader()
+  if (!reader) {
+    send(sender, sessionId, { type: 'error', error: 'No response body from Claude account API.' })
+    return
+  }
+
+  const decoder = new TextDecoder()
+  let buf = ''
+
+  while (true) {
+    if (ctrl.signal.aborted) break
+    const { done, value } = await reader.read()
+    if (done) break
+    buf += decoder.decode(value, { stream: true })
+    const lines = buf.split('\n')
+    buf = lines.pop() ?? ''
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue
+      const raw = line.slice(6).trim()
+      if (!raw || raw === '[DONE]') continue
+      try {
+        const evt = JSON.parse(raw) as Record<string, unknown>
+        if (evt.type === 'completion' && typeof evt.completion === 'string') {
+          send(sender, sessionId, { type: 'text', content: evt.completion })
+        } else if (evt.type === 'content_block_delta') {
+          const delta = evt.delta as Record<string, unknown> | undefined
+          if (delta?.type === 'text_delta' && typeof delta.text === 'string') {
+            send(sender, sessionId, { type: 'text', content: delta.text })
+          }
+        } else if (evt.type === 'error') {
+          send(sender, sessionId, { type: 'error', error: String(evt.error ?? 'Unknown error') })
+          return
+        }
+      } catch { /* ignore malformed JSON */ }
+    }
+  }
+
+  send(sender, sessionId, { type: 'done' })
+}
+
 export function registerAiHandlers(): void {
   ipcMain.handle('ai:getSubscriptions', (): Subscription[] => getSubscriptions())
   ipcMain.handle('ai:addSubscription', (_, sub: Subscription) => addSubscription(sub))
@@ -205,9 +327,9 @@ export function registerAiHandlers(): void {
     const { sessionId, subscriptionId, provider } = opts
     const sender = event.sender
 
-    const apiKey = getKey(subscriptionId)
-    if (!apiKey) {
-      send(sender, sessionId, { type: 'error', error: 'API key not found.' })
+    const sub = getSub(subscriptionId)
+    if (!sub) {
+      send(sender, sessionId, { type: 'error', error: 'Subscription not found.' })
       return
     }
 
@@ -215,6 +337,28 @@ export function registerAiHandlers(): void {
     activeStreams.set(sessionId, ctrl)
 
     try {
+      // Account-based auth (session cookie)
+      if (sub.authType === 'account') {
+        const token = sub.sessionToken
+        if (!token) {
+          send(sender, sessionId, { type: 'error', error: 'Session token missing — reconnect your account.' })
+          return
+        }
+        if (provider === 'claude') {
+          await runClaudeAccount(opts, sender, token, ctrl)
+        } else {
+          send(sender, sessionId, { type: 'error', error: `Account login for "${provider}" not yet supported.` })
+        }
+        return
+      }
+
+      // API-key based auth
+      const apiKey = sub.apiKey
+      if (!apiKey) {
+        send(sender, sessionId, { type: 'error', error: 'API key not found.' })
+        return
+      }
+
       if (provider === 'claude') {
         await runClaude(opts, sender, apiKey, ctrl)
       } else if (provider === 'openai') {

@@ -92,6 +92,9 @@ const api = {
     download: (): void => ipcRenderer.send('updater:download'),
     install: (): void => ipcRenderer.send('updater:install')
   },
+  auth: {
+    login: (provider: string): Promise<string | null> => ipcRenderer.invoke('auth:login', provider)
+  },
   fs: {
     openFolder: (): Promise<string | null> => ipcRenderer.invoke('fs:openFolder'),
     openFile: (): Promise<string | null> => ipcRenderer.invoke('fs:openFile'),

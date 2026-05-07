@@ -1,34 +1,36 @@
-import { ipcMain, dialog, BrowserWindow } from 'electron'
+import { ipcMain, dialog } from 'electron'
 import { readdir, readFile, writeFile, mkdir, rename, unlink } from 'fs/promises'
 import { join } from 'path'
 import type { FileEntry } from '../../shared/types'
 import { getRecentFolders, addRecentFolder } from '../services/settings'
 
 export function registerFsHandlers(): void {
-  ipcMain.handle('fs:openFolder', async event => {
-    const win = BrowserWindow.fromWebContents(event.sender)
-    win?.focus()
+  ipcMain.handle('fs:openFolder', async () => {
     try {
-      const opts = { properties: ['openDirectory'] as const, title: 'Open Folder' }
-      const result = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts)
+      const result = await dialog.showOpenDialog({
+        properties: ['openDirectory'],
+        title: 'Open Folder'
+      })
       if (result.canceled || !result.filePaths.length) return null
       const folderPath = result.filePaths[0]
       addRecentFolder(folderPath).catch(() => {})
       return folderPath
-    } catch {
+    } catch (e) {
+      console.error('openFolder error:', e)
       return null
     }
   })
 
-  ipcMain.handle('fs:openFile', async event => {
-    const win = BrowserWindow.fromWebContents(event.sender)
-    win?.focus()
+  ipcMain.handle('fs:openFile', async () => {
     try {
-      const opts = { properties: ['openFile'] as const, title: 'Open File' }
-      const result = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts)
+      const result = await dialog.showOpenDialog({
+        properties: ['openFile'],
+        title: 'Open File'
+      })
       if (result.canceled || !result.filePaths.length) return null
       return result.filePaths[0]
-    } catch {
+    } catch (e) {
+      console.error('openFile error:', e)
       return null
     }
   })

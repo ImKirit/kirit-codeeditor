@@ -6,6 +6,7 @@ import { registerTerminalHandlers, watchWindowForTerminals } from './ipc/termina
 import { registerGitHandlers } from './ipc/git'
 import { registerSearchHandlers } from './ipc/search'
 import { registerAiHandlers, watchWindowForAI } from './ipc/ai'
+import { registerAuthHandlers } from './ipc/auth'
 import { loadSettings } from './services/settings'
 
 const isDev = process.env['ELECTRON_RENDERER_URL'] !== undefined
@@ -89,6 +90,7 @@ app.whenReady().then(async () => {
   registerGitHandlers()
   registerSearchHandlers()
   registerAiHandlers()
+  registerAuthHandlers()
 
   const win = createWindow()
   watchWindowForTerminals(win)

@@ -52,11 +52,15 @@ export interface Session {
   updatedAt: number
 }
 
+export type SubscriptionAuthType = 'apikey' | 'account'
+
 export interface Subscription {
   id: string
   provider: string
   label: string
-  apiKey: string
+  authType: SubscriptionAuthType
+  apiKey?: string       // used when authType === 'apikey'
+  sessionToken?: string // used when authType === 'account' (browser login)
 }
 
 export type ProviderId = 'claude' | 'openai' | 'gemini' | 'copilot'
